@@ -1137,7 +1137,7 @@
 
       // ----- 몸통 폭(정면 반폭, cm): 아우터 안쪽 옷은 아우터 안으로 들어가게 줄인다 -----
       const outerHalf = { blazer: 20, coat: 21, jacket: 21.5, blouson: 24.5, vest: 21 }[style] || 0;
-      const fit = w => outerOn && style !== 'vest' ? Math.min(w, outerHalf - 1.2) : (outerOn ? Math.min(w, outerHalf - 0.6) : w);
+      const fit = w => outerOn && style !== 'vest' ? Math.min(w, outerHalf - 1.2) : w;   // 베스트는 이너를 줄이지 않고 그 위에 걸친다(오버사이즈 스웨트가 옆으로 보임)
       const len = (it, kind) => HPS + (it.len || DEFAULT_LEN[kind]);
 
       const back = [], body = [], front = [], labels = [];
@@ -1150,7 +1150,7 @@
       back.push(`<path d="M -5,3 Q -1,1.4 3.4,2.6 M -3.4,1.8 Q 0.4,0.6 5,2.4" fill="none" stroke="#3a3a3e" stroke-width="0.35" stroke-linecap="round"/>`);
       if (shirtOn) back.push(`<path d="M -5.4,25.6 Q -5.2,23.4 -4.4,23.1 Q 0,22.5 4.4,23.1 Q 5.2,23.4 5.4,25.6 L 5.1,28.4 L -5.1,28.4 Z" fill="${fillOf(shirt)}" stroke="${lineOf(shirt.hex)}" stroke-width="0.3"/>`);   // 목 뒤 칼라 밴드
       back.push(`<path d="M -4.3,18.5 L -4.8,29 Q 0,31 4.8,29 L 4.3,18.5 Z" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`);
-      [-1, 1].forEach(s => { const A = ARM(s); const cy = A[2][1] + 4.4; back.push(`<ellipse cx="${r1(A[2][0] + s * 0.4)}" cy="${r1(cy)}" rx="2.4" ry="4.1" transform="rotate(${s * -6} ${r1(A[2][0])} ${r1(cy)})" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`); });
+      [-1, 1].forEach(s => { const A = ARM(s); const cy = A[2][1] + 3.6; back.push(`<ellipse cx="${r1(A[2][0] + s * 0.4)}" cy="${r1(cy)}" rx="2.4" ry="4.1" transform="rotate(${s * -6} ${r1(A[2][0])} ${r1(cy)})" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`); });
 
       // ----- 바지 (릴렉스 스트레이트 치노 / 데님) -----
       const pantsD = `M -18.6,${WAIST} L 18.6,${WAIST} Q 20.8,80 21,90 Q 20.4,134 18.4,${HEM_Y} L 3.6,${HEM_Y} Q 3.9,134 1,94 Q 0,92.6 -1,94 Q -3.9,134 -3.6,${HEM_Y} L -18.4,${HEM_Y} Q -20.4,134 -21,90 Q -20.8,80 -18.6,${WAIST} Z`;
@@ -1172,10 +1172,14 @@
       const shirtParts = [], shirtTop = [];
       if (shirtOn) {
         const w = fit(19.5), hemY = tucked ? WAIST + 3.5 : len(shirt, 'shirt') - SHIRT_TAIL;   // 빼입으면 앞 밑단(뒤 기장보다 짧음)까지
+        // 빼입은 셔츠는 바지 골반(반폭 21)을 덮으며 살짝 A라인으로 떨어진다. 스웨트·재킷 안에서는 그 밑단보다 넓어지지 않게
+        const hip = outerOn && style !== 'vest' && style !== 'blouson' ? 21 : sweatOn ? 21 : 21.8;
         const sides = tucked
           ? `L -${w},41 Q -${w - 0.2},58 -${w + 0.6},${WAIST + 1} L -${w + 0.6},${hemY} L ${w + 0.6},${hemY} L ${w + 0.6},${WAIST + 1} Q ${w - 0.2},58 ${w},41`
-          : `L -${w},41 L -${w},${hemY - 4.5} Q -${w * 0.45},${hemY + 0.6} 0,${hemY} Q ${w * 0.45},${hemY + 0.6} ${w},${hemY - 4.5} L ${w},41`;
-        const bodyD = `M -6.4,27.6 L -21.4,31.3 ${sides} L 21.4,31.3 L 6.4,27.6 Q 0,30.4 -6.4,27.6 Z`;
+          : `L -${w},41 L -${hip},${hemY - 4.5} Q -${hip * 0.45},${hemY + 0.6} 0,${hemY} Q ${hip * 0.45},${hemY + 0.6} ${hip},${hemY - 4.5} L ${w},41`;
+        // 스웨트 안에서는 셔츠 어깨를 스웨트 어깨선 아래로 낮춰 삐져나오지 않게 한다
+        const [shX, shY] = sweatOn ? [18.5, 33] : [21.4, 31.3];
+        const bodyD = `M -6.4,27.6 L -${shX},${shY} ${sides} L ${shX},${shY} L 6.4,27.6 Q 0,30.4 -6.4,27.6 Z`;
         const shirtSleeves = [-1, 1].map(s => sleevePath(s, [s * 21.6, 31.3], [s * w, 41], 5.6, 4.6, 1.2));
         if (!sweatOn && !(outerOn && style !== 'vest')) shirtSleeves.forEach(sl => shirtParts.push(piece(sl.d, shirt)));
         if (!sweatOn) {
@@ -1213,7 +1217,6 @@
         sweatParts.push(`<path d="M -${w},${hemY - 5} L ${w},${hemY - 5} L ${w - 1.4},${hemY} L -${w - 1.4},${hemY} Z" fill="${detailOf(sweat.hex)}" stroke="${lineOf(sweat.hex)}" stroke-width="0.3"/>`);
         for (let x = -w + 1.2; x < w - 1; x += 1.3) sweatParts.push(seam(`M ${r1(x)},${hemY - 4.6} L ${r1(x * 0.97)},${hemY - 0.4}`, sweat, 0.12));
         sweatParts.push(`<path d="M -7.4,27.5 Q 0,31.8 7.4,27.5 Q 7.9,29.6 7.3,30.4 Q 0,34.4 -7.3,30.4 Q -7.9,29.6 -7.4,27.5 Z" fill="${detailOf(sweat.hex)}" stroke="${lineOf(sweat.hex)}" stroke-width="0.3"/>`);
-        [-1, 1].forEach(s => sweatParts.push(seam(`M ${s * shX},${shY} Q ${s * (shX - 2)},41 ${s * w},46`, sweat, 0.25)));
         labels.push({ y: hemY, text: `스웨트${sweat.len ? ' ' + cm(sweat.len) : ''}` });
       }
 
@@ -1224,7 +1227,7 @@
         if (style === 'blazer' || style === 'coat' || style === 'jacket') {
           const w = outerHalf;
           [-1, 1].forEach(s => {
-            const panel = `M ${s * 6.3},28.2 Q ${s * 14},26.9 ${s * 23.2},30.6 Q ${s * 22.8},35 ${s * (w + 0.2)},41 Q ${s * (w - 0.7)},55 ${s * (w - 0.6)},64 Q ${s * (w - 0.2)},${hemY - 12} ${s * (w + 0.3)},${hemY} L ${s * 12.5},${hemY} Q ${s * 11},${hemY} ${s * 9.5},${hemY - 0.6} Q ${s * 6.6},${hemY - 9} ${s * 5.2},56 L ${s * 4.6},40 Z`;
+            const panel = `M ${s * 6.3},28.2 Q ${s * 14},26.9 ${s * 23.2},30.6 Q ${s * 22.8},35 ${s * (w + 0.2)},41 Q ${s * (w - 0.7)},55 ${s * (w - 0.6)},64 Q ${s * (w + 1)},${hemY - 12} ${s * (w + 2)},${hemY} L ${s * 12.5},${hemY} Q ${s * 11},${hemY} ${s * 9.5},${hemY - 0.6} Q ${s * 6.6},${hemY - 9} ${s * 5.2},56 L ${s * 4.6},40 Z`;
             outerParts.push(piece(panel, o));
             // 노치 라펠
             const lapel = `M ${s * 6.3},28.2 L ${s * 8.6},31.4 L ${s * 11.9},33.6 L ${s * 11.3},35.4 L ${s * 13},36.3 L ${s * 5.6},55.4 L ${s * 4.6},40 Z`;
@@ -1249,7 +1252,7 @@
             const panel = `M ${s * 7},28 ${shoulder} ${sideBottom} L ${s * frontX1},${isVest ? hemY : hemY - bandH} L ${s * frontX0},30.5 Z`;
             outerParts.push(piece(panel, o));
             // 퀼팅 (가로 다운 채널)
-            for (let y = 41; y < hemY - bandH - 3; y += 8.5) {
+            for (let y = isVest ? 48 : 41; y < hemY - bandH - 3; y += 8.5) {   // 베스트는 진동(암홀) 곡선 아래부터
               const xi = s * (frontX0 + (frontX1 - frontX0) * (y - 30) / (hemY - 30)) + s * 0.4, xo = s * (w - 0.4);
               outerParts.push(seam(`M ${r1(xi)},${y} Q ${r1((xi + xo) / 2)},${y + 0.9} ${r1(xo)},${y}`, o, 0.28));
             }
