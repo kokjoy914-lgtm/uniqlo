@@ -195,7 +195,7 @@
       { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용' }
     ];
 
-    // 옷 데이터(기본값). 시트를 연동하면 시트가 우선합니다.
+    // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23
     // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
     // style(아우터만): blazer | coat | blouson | jacket — 비우면 이름에서 추정
     // pattern: solid | stripe | check 등 (solid 외에는 패턴으로 취급)
@@ -218,8 +218,8 @@
       { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', pattern: 'solid' },
       { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', pattern: 'solid' },
       { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 남색', hex: '#1e293b', pattern: 'solid' },
-      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', pattern: 'stripe' },
-      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', pattern: 'stripe' },
+      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', pattern: 'stripe-gray' },
+      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', pattern: 'stripe-blue' },
 
       // 하의
       { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', pattern: 'solid' },
