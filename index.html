@@ -1092,8 +1092,6 @@
       const detailOf = hex => lum(hex) > 140 ? scale(hex, 0.86) : toHex(rgb(hex).map(v => v + (255 - v) * 0.12)); // 시보리·칼라
 
       const defs = [
-        // 셀 셰이딩: 빛은 왼쪽 위에서, 그림자는 오른쪽에 경계가 분명한 한 단으로
-        `<linearGradient id="vol" x1="0" x2="1" y1="0" y2="0"><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset=".74" stop-color="#000" stop-opacity=".11"/><stop offset="1" stop-color="#000" stop-opacity=".11"/></linearGradient>`
       ];
       const fillOf = it => {
         if (!it.patterned) return it.hex;
@@ -1101,10 +1099,10 @@
         if (!defs.some(d => d.includes(`id="${id}"`))) defs.push(`<pattern id="${id}" width="1.8" height="1.8" patternUnits="userSpaceOnUse"><rect width="1.8" height="1.8" fill="${it.hex}"/><rect width="0.45" height="1.8" fill="${stripeLine(it)}"/></pattern>`);
         return `url(#${id})`;
       };
-      // 옷 조각: 바탕색 + 입체 음영 + 외곽선
+      // 옷 조각: 평면 채색 + 외곽선 (지브리풍). 소매만 양쪽 똑같이 한 톤 어둡게 해 몸판과 팔을 구분한다
       const piece = (d, it, opts = {}) =>
         `<path d="${d}" fill="${opts.fill || fillOf(it)}" stroke="${lineOf(it.hex)}" stroke-width="${opts.sw || 0.5}" stroke-linejoin="round"/>` +
-        (opts.noShade ? '' : `<path d="${d}" fill="url(#vol)" pointer-events="none"/>`);
+        (opts.sleeve ? `<path d="${d}" fill="#000" opacity=".07" pointer-events="none"/>` : '');
       const seam = (d, it, w = 0.3, dash = '') => `<path d="${d}" fill="none" stroke="${lineOf(it.hex)}" stroke-width="${w}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
 
       // ----- 팔 골격 (A자로 살짝 벌린 자세) -----
@@ -1181,7 +1179,7 @@
         const [shX, shY] = sweatOn ? [18.5, 33] : [21.4, 31.3];
         const bodyD = `M -6.4,27.6 L -${shX},${shY} ${sides} L ${shX},${shY} L 6.4,27.6 Q 0,30.4 -6.4,27.6 Z`;
         const shirtSleeves = [-1, 1].map(s => sleevePath(s, [s * 21.6, 31.3], [s * w, 41], 5.6, 4.6, 1.2));
-        if (!sweatOn && !(outerOn && style !== 'vest')) shirtSleeves.forEach(sl => shirtParts.push(piece(sl.d, shirt)));
+        if (!sweatOn && !(outerOn && style !== 'vest')) shirtSleeves.forEach(sl => shirtParts.push(piece(sl.d, shirt, { sleeve: true })));
         if (!sweatOn) {
           shirtParts.push(piece(bodyD, shirt));
           shirtParts.push(seam(`M 0.6,30 L 0.6,${hemY - 0.5}`, shirt, 0.3));
@@ -1207,7 +1205,7 @@
         if (!(outerOn && style !== 'vest')) {
           [-1, 1].forEach(s => {
             const sl = sleevePath(s, [s * 26, 35], [s * w, 46], 6.8, 5.6, 0.2);
-            sweatSleeves.push(piece(sl.d, sweat));
+            sweatSleeves.push(piece(sl.d, sweat, { sleeve: true }));
             sweatSleeves.push(cuffBand(sl, 4.5, sweat, detailOf(sweat.hex)));
             const A = ARM(s); sweatSleeves.push(seam(`M ${r1(A[2][0] - s * 3.8)},${r1(A[2][1] - 9)} q ${s * 2},1.2 ${s * 4},0.3`, sweat, 0.2));   // 소매 주름
           });
@@ -1231,14 +1229,14 @@
             outerParts.push(piece(panel, o));
             // 노치 라펠
             const lapel = `M ${s * 6.3},28.2 L ${s * 8.6},31.4 L ${s * 11.9},33.6 L ${s * 11.3},35.4 L ${s * 13},36.3 L ${s * 5.6},55.4 L ${s * 4.6},40 Z`;
-            outerParts.push(piece(lapel, o, { fill: scale(o.hex, lum(o.hex) > 140 ? 0.94 : 1.12), sw: 0.3, noShade: true }));
+            outerParts.push(piece(lapel, o, { fill: scale(o.hex, lum(o.hex) > 140 ? 0.94 : 1.12), sw: 0.3 }));
             outerParts.push(seam(`M ${s * 11.9},33.6 L ${s * 11.3},35.4`, o, 0.35));
             // 플랩 포켓
             const py = Math.min(hemY - 14, 82);
-            outerParts.push(piece(`M ${s * 10.5},${py} L ${s * 18.2},${py - 0.2} L ${s * 18.4},${py + 3.2} L ${s * 10.7},${py + 3.4} Z`, o, { sw: 0.28, noShade: true }));
+            outerParts.push(piece(`M ${s * 10.5},${py} L ${s * 18.2},${py - 0.2} L ${s * 18.4},${py + 3.2} L ${s * 10.7},${py + 3.4} Z`, o, { sw: 0.28 }));
             // 소매 (몸판 뒤에 깔리도록 앞쪽에 넣는다)
             const sl = sleevePath(s, [s * 23.2, 30.6], [s * (w + 0.2), 41], sweatOn ? 7 : 6.2, sweatOn ? 6 : 5.2, -0.4);
-            outerParts.unshift(piece(sl.d, o));
+            outerParts.unshift(piece(sl.d, o, { sleeve: true }));
             [1.8, 3.2].forEach(k => { const [ux, uy] = sl.dir; outerTop.push(`<circle cx="${r1(sl.end[0] - ux * k + s * (sweatOn ? 3 : 2.4))}" cy="${r1(sl.end[1] - uy * k)}" r="0.5" fill="${lineOf(o.hex)}"/>`); });
           });
           outerParts.push(seam(`M 11,47.5 L 16.5,47.3`, o, 0.4));                        // 가슴 웰트 포켓(착용자 왼쪽)
@@ -1259,11 +1257,11 @@
             // 지퍼 테이프
             outerParts.push(seam(`M ${s * (frontX0 + 0.5)},30.6 L ${s * (frontX1 + 0.5)},${isVest ? hemY - 0.3 : hemY - bandH}`, o, 0.5, '0.5 0.4'));
             // 스탠드 칼라 (열린 상태라 좌우가 벌어짐)
-            outerParts.push(piece(`M ${s * 5.6},30.6 L ${s * 5.9},26.4 Q ${s * 8.4},25.9 ${s * 10.6},27.4 L ${s * 11.2},30.2 Q ${s * 8.6},29 ${s * 5.6},30.6 Z`, o, { fill: detailOf(o.hex), sw: 0.3, noShade: true }));
+            outerParts.push(piece(`M ${s * 5.6},30.6 L ${s * 5.9},26.4 Q ${s * 8.4},25.9 ${s * 10.6},27.4 L ${s * 11.2},30.2 Q ${s * 8.6},29 ${s * 5.6},30.6 Z`, o, { fill: detailOf(o.hex), sw: 0.3 }));
             if (!isVest) {
               outerParts.push(`<path d="M ${s * w},${hemY - bandH} L ${s * frontX1},${hemY - bandH} L ${s * frontX1},${hemY} L ${s * (w - 2)},${hemY} Z" fill="${detailOf(o.hex)}" stroke="${lineOf(o.hex)}" stroke-width="0.3"/>`);
               const sl = sleevePath(s, [s * 27.2, 34.2], [s * w, 46], 7.6, 6.2, -0.2);
-              outerParts.unshift(piece(sl.d, o) + cuffBand(sl, 3.8, o, detailOf(o.hex)));
+              outerParts.unshift(piece(sl.d, o, { sleeve: true }) + cuffBand(sl, 3.8, o, detailOf(o.hex)));
             } else {
               outerParts.push(`<path d="M ${s * w},${hemY} L ${s * frontX1},${hemY} L ${s * frontX1},${hemY - bandH} L ${s * w},${hemY - bandH} Z" fill="${detailOf(o.hex)}" stroke="${lineOf(o.hex)}" stroke-width="0.25"/>`);
             }
@@ -1282,7 +1280,7 @@
         const W = inJacket ? 6 : outerOn ? 6.2 : sweatOn ? 6.8 : 7, px = inJacket ? 4.5 : 4.9, py = inJacket ? 35.4 : 35.8;
         const wy = sweatOn ? 26 : 27;   // 스웨트 위로는 칼라 롤이 조금 더 서 보이게
         // 목 옆에서 접혀 내려온 칼라 날개: 접힘선(목) → 바깥 끝 → 칼라 포인트 → 첫 단추
-        [-1, 1].forEach(s => collarParts.push(piece(`M ${s * 4.7},24 Q ${s * (W - 0.6)},${wy - 2.4} ${s * W},${wy} Q ${s * (W - 0.2)},31.6 ${s * px},${py} L ${s * 0.35},30.6 Q ${s * 2.8},28.4 ${s * 4.7},24 Z`, shirt, { fill: cf, sw: 0.32, noShade: true }) + `<circle cx="${r1(s * (px + 0.2))}" cy="${r1(py - 1.6)}" r="0.4" fill="${lineOf(shirt.hex)}"/>`));
+        [-1, 1].forEach(s => collarParts.push(piece(`M ${s * 4.7},24 Q ${s * (W - 0.6)},${wy - 2.4} ${s * W},${wy} Q ${s * (W - 0.2)},31.6 ${s * px},${py} L ${s * 0.35},30.6 Q ${s * 2.8},28.4 ${s * 4.7},24 Z`, shirt, { fill: cf, sw: 0.32 }) + `<circle cx="${r1(s * (px + 0.2))}" cy="${r1(py - 1.6)}" r="0.4" fill="${lineOf(shirt.hex)}"/>`));
         shirtTop.forEach(({ cuff }) => {
           const sleeveCovered = sweatOn || (outerOn && style !== 'vest');
           cuffParts.push(cuffBand(cuff, sleeveCovered ? 2.2 : 4.2, shirt, cf));
