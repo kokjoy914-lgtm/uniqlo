@@ -495,7 +495,7 @@
           if (structured) {
             sweatLine = g < 0
               ? ` 스웨트(${cm(sweat.len)})는 ${outer.short}(${cm(outer.len)})보다 ${cm(-g)} 짧아 아우터 안에 가려져 깔끔합니다.`
-              : ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밖으로 ${cm(g)} 나와 라인이 흐트러집니다. 스웨트 앞자락을 바지에 반만 넣어 정리하세요.`;
+              : ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밖으로 ${cm(g)} 나와 라인이 흐트러집니다. 스웨트 밑단을 한 번 접어 올려 아우터 안에 가리세요.`;
           } else {
             sweatLine = g >= 3 && g <= 8
               ? ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밑단 아래로 ${cm(g)} 보여 층이 자연스럽게 읽힙니다.`
@@ -507,18 +507,18 @@
           sweatLine = ` 스웨트와 셔츠 모두 ${outer.short} 밑단 밖으로는 나오지 않게 앞쪽을 정리하세요.`;
         }
         if (hem.shirtBelowSweat !== null && hem.shirtBelowSweat > 4) {
-          return { target: '셔츠', action: '넣고 스웨트는 빼입기', icon: '👔', short: `셔츠가 스웨트보다 ${cm(hem.shirtBelowSweat)} 김`,
-            reason: `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(hem.shirtBelowSweat)} 길어 빼입으면 밑단이 한 뼘 가까이 나와 단정치 못합니다. 셔츠는 바지에 넣고 스웨트만 빼입으세요. 스웨트가 허리를 덮어 셔츠를 넣은 부피가 드러나지 않습니다. 밑단 브릿지는 쓸 수 없으니 칼라와 소매 커프스로 대신합니다.${sweatLine}` };
+          return { target: '셔츠', action: '넣어 입기', icon: '👔', short: `셔츠가 스웨트보다 ${cm(hem.shirtBelowSweat)} 김`,
+            reason: `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(hem.shirtBelowSweat)} 길어 빼입으면 밑단이 한 뼘 가까이 나와 단정치 못합니다. 셔츠는 바지에 넣어 입으세요(스웨트는 평소처럼 빼입습니다). 스웨트가 허리를 덮어 셔츠를 넣은 부피가 드러나지 않습니다. 밑단 브릿지는 쓸 수 없으니 칼라와 소매 커프스로 대신합니다.${sweatLine}` };
         }
-        return { target: '셔츠·스웨트', action: '모두 빼입기', icon: '👕', short,
-          reason: `스웨트 안의 셔츠도, 스웨트도 바지에 넣지 않습니다. 두 겹을 넣으면 허리에 부피가 몰려 부해 보입니다. ${shirtLine}${sweatLine}` };
+        return { target: '셔츠', action: '빼입기', icon: '👕', short,
+          reason: `스웨트 안의 셔츠는 바지에 넣지 않습니다. 두 겹이 허리에 몰려 부해 보이기 때문입니다. ${shirtLine}${sweatLine}` };
       }
       let sweatOnly = `오버사이즈 스웨트는 바지에 넣지 않고 밑단 시보리를 골반에 살짝 걸쳐 입습니다. 넣으면 볼륨이 허리에 뭉쳐 비율이 무너집니다.`;
       if (hem.sweatBelowOuter !== null && !structured) {
         const g = hem.sweatBelowOuter;
         sweatOnly += g >= 3 && g <= 8 ? ` ${outer.short} 밑단 아래로 ${cm(g)} 보여 층이 자연스럽습니다.` : (g >= 0 ? ` ${outer.short} 밑단과 ${cm(g)}밖에 차이 나지 않아 층이 어정쩡합니다.` : '');
       }
-      return { target: '스웨트', action: '빼입기', icon: '👕', short: '시보리를 골반에 걸치기', reason: sweatOnly };
+      return { target: '스웨트', action: '그대로 입기', icon: '👕', short: '시보리를 골반에 걸치기', reason: sweatOnly };
     }
 
     // 핵심 학습형 채점 엔진
