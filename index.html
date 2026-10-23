@@ -197,7 +197,7 @@
 
     // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23
     // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
-    // style(아우터만): blazer | coat | blouson | jacket — 비우면 이름에서 추정
+    // style(아우터만): blazer | coat | blouson | vest | jacket — 비우면 이름에서 추정
     // pattern: solid | stripe | check 등 (solid 외에는 패턴으로 취급)
     const DEFAULT_ITEMS = [
       // 아우터
@@ -263,6 +263,7 @@
       return 'neutral';
     }
     function inferOuterStyle(name) {
+      if (/베스트|조끼|vest/i.test(name)) return 'vest';
       if (/블레이저|blazer/i.test(name)) return 'blazer';
       if (/코트|트렌치|coat|trench/i.test(name)) return 'coat';
       if (/블루종|봉버|bomber|blouson/i.test(name)) return 'blouson';
@@ -571,6 +572,19 @@
           tags.push('#숏블루종실루엣');
           classicTrendLesson = `<b>[크롭 아우터 (+3점)]</b> 비율 자체는 좋지만 이너도 밝아서 아우터와 이너의 대비가 약합니다. 이너를 한 톤 어둡게 가면 더 좋아집니다.`;
         }
+      } else if (style === 'vest') {
+        // 소매 없는 경량 패딩: 이너의 소매·칼라가 그대로 보이므로 이너와의 명도 대비가 핵심
+        if (sameBlock || darkMerge) {
+          colorScore -= 6;
+          classicTrendLesson = `<b>[베스트와 이너의 색 겹침 (-6점)]</b> ${outer.name}과 ${mainTop.name}의 명도가 비슷해 베스트의 윤곽이 이너에 묻힙니다. 소매가 그대로 보이는 아우터라서 이너를 밝게 가야 구조가 읽힙니다.`;
+        } else if (mainTop.lightness >= 60) {
+          silhouetteScore += 6;
+          tags.push('#스포티프레피');
+          classicTrendLesson = `<b>[경량 베스트 + 밝은 이너 (+6점)]</b> 어두운 ${outer.name} 아래로 밝은 ${mainTop.name}의 소매와 밑단이 드러나 몸통과 팔이 또렷하게 분리됩니다. 2026 F/W의 퍼퍼 복귀와 스포티 프레피 흐름에 맞는 구성입니다.`;
+        } else {
+          silhouetteScore += 3;
+          classicTrendLesson = `<b>[경량 베스트 (+3점)]</b> 충돌은 없지만 이너가 어두워 베스트와의 대비가 약합니다. 밝은 이너로 바꾸면 한 단계 올라갑니다.`;
+        }
       } else if (style === 'jacket') {
         if (sameBlock || darkMerge) {
           colorScore -= 6;
@@ -596,7 +610,9 @@
       // 4. 실전 착용 디테일 처방전
       // =========================================================
       if (mode === 'shirt_only') {
-        if (style === 'blazer' || style === 'coat') {
+        if (style === 'vest') {
+          stylingTip = `📌 <b>착용 디테일:</b> 베스트는 지퍼를 끝까지 올리기보다 가슴 아래까지만 잠가 이너의 칼라와 셔츠 밑단이 보이게 하세요. 소매가 드러나므로 소매를 한 번 걷어 올리면 균형이 맞습니다.`;
+        } else if (style === 'blazer' || style === 'coat') {
           stylingTip = `📌 <b>착용 디테일:</b> 구조적인 아우터를 입을 때는 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하고, 갈색이나 블랙 가죽 벨트를 채워주면 완벽합니다.`;
         } else {
           stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;

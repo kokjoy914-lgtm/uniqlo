@@ -20,7 +20,7 @@
 | `hex` | ✅ | **실제 옷 색**. `#RRGGBB` 형식 |
 | `desc` |  | 설명 (자유) |
 | `pattern` |  | `solid`(기본) 또는 `stripe`, `check` 등. solid가 아니면 패턴 옷으로 채점 |
-| `style` |  | **아우터만**: `blazer` / `coat` / `blouson` / `jacket`. 비우면 이름에서 추정 |
+| `style` |  | **아우터만**: `blazer` / `coat` / `blouson` / `vest` / `jacket`. 비우면 이름에서 추정 |
 | `tone`, `temp` |  | 비워두세요. hex에서 자동 판정됩니다. 직접 지정하면 그 값을 우선 사용합니다 |
 
 `lightness`(명도)는 입력하지 않습니다. hex에서 자동 계산되며, 입력해도 무시됩니다.
