@@ -44,7 +44,7 @@
     <div class="flex items-center justify-between mb-2">
       <div>
         <h1 class="text-base font-black tracking-tight text-slate-900">WARDROBE ACADEMY</h1>
-        <p class="text-[11px] text-slate-500" id="dataSourceBadge">클래식 공식 & 2026 트렌드 학습 엔진</p>
+        <p class="text-[11px] text-slate-500" id="dataSourceBadge">클래식 공식 + 2026 F/W 트렌드 룰 엔진</p>
       </div>
       <div class="flex gap-1.5">
         <button onclick="recommendBestRandom()" class="px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
@@ -71,7 +71,7 @@
       </div>
       <div class="text-right flex-shrink-0 pl-2">
         <div class="text-[10px] text-slate-400 font-bold tracking-wider">SCORE</div>
-        <div class="text-2xl font-black leading-none text-amber-400"><span id="totalScore">96</span><span class="text-xs font-normal text-slate-400">점</span></div>
+        <div class="text-2xl font-black leading-none text-amber-400"><span id="totalScore">--</span><span class="text-xs font-normal text-slate-400">점</span></div>
       </div>
     </div>
   </header>
@@ -260,14 +260,28 @@
       return 'shirt_only';
     }
 
+    // =========================================================
+    // 채점 기준표 (클래식 공식 + 2026 F/W 런웨이 트렌드)
+    // 기준: 무난한 조합 = 70점대 / 의도가 보이는 조합 = 80점대 / 90+ = 공식과 트렌드가 동시에 맞는 조합
+    // 트렌드 근거: 2026 F/W 남성복 — 블랙·차콜·딥초콜릿 지배, 슬림·구조적 테일러링 복귀,
+    //             1960s 초반 프레피 무드, 니트/스웨트 레이어링, 셔츠 칼라 디테일 강조
+    // =========================================================
+    const SCORE_RULES = {
+      base:   { color: 28, layer: 17, silhouette: 18 },   // 각 영역 기본점 (만점: 40 / 30 / 30)
+      limits: { color: [10, 40], layer: [8, 30], silhouette: [8, 30] },
+      grade:  [[95, 'S+', '디자이너도 고개를 끄덕일 완성형'], [89, 'S', '공식과 트렌드가 모두 맞는 룩'],
+               [81, 'A', '의도가 느껴지는 좋은 코디'], [72, 'B', '무난한 데일리 룩']]  // 72 미만은 C
+    };
+
     // 핵심 학습형 채점 엔진
     function evaluateOutfit(outer, sweat, shirt, bottom) {
       const mode = getWearingMode(sweat, shirt);
       const mainTop = mode === 'shirt_only' ? shirt : sweat;
+      const B = SCORE_RULES.base;
 
-      let colorScore = 30;      // 40점 만점
-      let layerScore = 22;      // 30점 만점
-      let silhouetteScore = 24; // 30점 만점
+      let colorScore = B.color;
+      let layerScore = B.layer;
+      let silhouetteScore = B.silhouette;
 
       const tags = [];
       let colorLesson = '';
@@ -275,142 +289,210 @@
       let classicTrendLesson = '';
       let stylingTip = '';
 
+      // 실제로 보이는 아이템 (아우터 포함, '안 입음' 제외)
+      const visible = [outer, sweat, shirt, bottom].filter(i => i.id.indexOf('_none') === -1);
+
       // =========================================================
-      // 1. 색채학 & 명도 대비 원리 (Color Theory & Lightness)
+      // 1. 색채학 & 명도 대비 원리 (40점)
       // =========================================================
       const lightDiff = Math.abs(mainTop.lightness - bottom.lightness);
       const mainCodeNum = mainTop.code.split(' ')[0];
       const bottomCodeNum = bottom.code.split(' ')[0];
 
       if (mainCodeNum === bottomCodeNum || (mainTop.code.includes('39') && bottom.code.includes('38'))) {
-        colorScore -= 12;
+        colorScore -= 10;
         tags.push('#톤겹침주의');
-        colorLesson = `<b>[동일 명도·색상 충돌 (점수 감점)]</b> 주 상의(${mainTop.name}, 명도 ${mainTop.lightness})와 하의(${bottom.name}, 명도 ${bottom.lightness})의 색상과 밝기가 거의 일치합니다. 상·하의 경계가 사라져 소위 '한 벌 작업복(점프수트)'처럼 답답해 보이는 현상이 발생합니다.`;
+        colorLesson = `<b>[동일 색상 충돌 (-10점)]</b> 주 상의(${mainTop.name}, 명도 ${mainTop.lightness})와 하의(${bottom.name}, 명도 ${bottom.lightness})가 사실상 같은 색입니다. 상·하의 경계가 사라져 '한 벌 작업복'처럼 보입니다.`;
       } else if (lightDiff >= 40) {
-        colorScore += 7;
+        colorScore += 10;
         tags.push('#고명도대비');
-        colorLesson = `<b>[명도 대비(Lightness Contrast)의 정석 (+7점)]</b> 상의(명도 ${mainTop.lightness})와 하의(명도 ${bottom.lightness})의 명도 차이가 <b>${lightDiff}포인트</b>로 매우 선명합니다. 시선이 자연스럽게 분리되어 상체는 화사하고 하체는 묵직하게 안정감을 주는 황금 비율입니다.`;
+        colorLesson = `<b>[명도 대비의 정석 (+10점)]</b> 상의(명도 ${mainTop.lightness})와 하의(명도 ${bottom.lightness})의 명도 차이가 <b>${lightDiff}포인트</b>입니다. 상체는 가볍고 하체는 묵직해 시선이 안정적으로 분리됩니다.`;
       } else if (mainTop.tone === bottom.tone && lightDiff >= 18) {
-        colorScore += 6;
+        colorScore += 8;
         tags.push('#톤온톤정석');
-        colorLesson = `<b>[톤온톤(Tone-on-Tone) 배색 (+6점)]</b> 같은 계열(${mainTop.tone.toUpperCase()}) 안에서 밝기 차이를 <b>${lightDiff}포인트</b>로 벌려주었습니다. 색 수를 절제하면서도 깊이감을 내는 가장 세련된 클래식 색채 공식입니다.`;
+        colorLesson = `<b>[톤온톤 배색 (+8점)]</b> 같은 계열(${mainTop.tone.toUpperCase()}) 안에서 밝기 차이를 <b>${lightDiff}포인트</b>로 벌렸습니다. 색 수는 절제하면서 깊이감을 내는 고급 배색입니다.`;
+      } else if (lightDiff >= 25) {
+        colorScore += 6;
+        tags.push('#중간명도대비');
+        colorLesson = `<b>[명확한 명도 분리 (+6점)]</b> 상·하의 명도 차이가 ${lightDiff}포인트로 충분히 구분되며, 색이 서로를 해치지 않고 이어집니다.`;
       } else if (mainTop.tone !== bottom.tone && lightDiff < 15) {
-        colorScore += 2;
+        colorScore += 1;
         tags.push('#톤인톤배색');
-        colorLesson = `<b>[톤인톤(Tone-in-Tone) 차분한 무드 (+2점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})의 색상은 다르지만 명도(밝기)가 비슷해 차분하게 가라앉는 분위기입니다. 이때는 셔츠 깃이나 밑단으로 밝은 흰색/하늘색 브릿지를 넣어주면 점수가 대폭 상승합니다.`;
+        colorLesson = `<b>[명도가 비슷한 톤인톤 (+1점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})의 밝기가 비슷해 가라앉은 인상입니다. 흰색·하늘색 셔츠 깃이나 밑단으로 밝은 브릿지를 넣어야 살아납니다.`;
       } else {
-        colorScore += 4;
-        colorLesson = `<b>[안정적인 중명도 밸런스 (+4점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})가 서로의 채도를 해치지 않고 자연스럽게 연결됩니다.`;
+        colorScore += 3;
+        colorLesson = `<b>[무난한 중명도 밸런스 (+3점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})가 충돌 없이 연결되지만, 대비가 약해 인상이 평범합니다.`;
       }
 
-      // 황금 컬러 페어링 추가 가산점
-      if (bottom.code.includes('56') && ['03', '31', '09', '01', '64', '69'].some(c => mainTop.code.includes(c))) {
-        colorScore += 3;
-        colorLesson += `<br><br>💡 <b>올리브(56)의 중화 작용:</b> 밀리터리에서 유래한 올리브 치노는 채도가 빠져 있어 무채색·네이비·베이지 어디에나 어우러지는 '제2의 데님' 역할을 완벽히 수행합니다.`;
+      // 명도 3단계(밝음/중간/어두움) 구성: 디자이너가 가장 먼저 보는 입체감
+      const tiers = new Set(visible.map(i => i.lightness >= 70 ? 'L' : (i.lightness >= 35 ? 'M' : 'D')));
+      if (tiers.size === 3) {
+        colorScore += 4;
+        tags.push('#명도3단구성');
+        colorLesson += `<br><br>🎚️ <b>명도 3단 구성 (+4점):</b> 밝음·중간·어두움이 모두 들어가 평면적이지 않고 입체감이 생깁니다.`;
       }
-      if (mainTop.code.includes('66') && (bottom.code.includes('38') || bottom.code.includes('08') || bottom.code.includes('34'))) {
+
+      // 유채색 계열이 3개 이상 섞이면 감점 (무채색·네이비는 제외)
+      const chroma = new Set(visible.map(i => i.tone).filter(t => t === 'earth' || t === 'blue'));
+      const warmCount = visible.filter(i => i.tone === 'earth').length;
+      const blueCount = visible.filter(i => i.tone === 'blue').length;
+      if (chroma.size >= 2 && warmCount + blueCount >= 3) {
+        colorScore -= 4;
+        tags.push('#색수과다');
+        colorLesson += `<br><br>⚠️ <b>유채색 과다 (-4점):</b> 어스톤과 블루가 3벌 이상 섞여 색이 산만합니다. 유채색은 2벌 이내로 줄이세요.`;
+      }
+
+      // 전신 다크 (밝은 브릿지 없음)
+      const allDark = visible.length >= 3 && visible.every(i => i.lightness < 40);
+      if (allDark) {
+        colorScore -= 6;
+        tags.push('#전신다크');
+        colorLesson += `<br><br>⚠️ <b>밝은 포인트 없는 전신 다크 (-6점):</b> 블랙·차콜 바람이 불어도 윤곽을 잡아줄 밝은 면(셔츠 깃·밑단)이 없으면 무겁고 둔해 보입니다.`;
+      }
+
+      // 올리브 치노: 검증된 중화 파트너
+      if (bottom.code.includes('56') && ['03', '31', '09', '01', '64', '69'].some(c => mainTop.code.includes(c))) {
+        colorScore += 2;
+        colorLesson += `<br><br>💡 <b>올리브(56)의 중화 작용 (+2점):</b> 채도가 빠진 올리브는 무채색·네이비·베이지 어디에나 어울리는 '제2의 데님'입니다.`;
+      }
+      // 2026 F/W: 차콜·딥초콜릿 하의 + 밝은 상의 (런웨이를 지배한 딥 뉴트럴을 밝은 면과 대비)
+      if (['38', '08'].some(c => bottom.code.includes(c)) && mainTop.lightness >= 70) {
+        colorScore += 3;
+        tags.push('#2026딥뉴트럴');
+        colorLesson += `<br><br>🖤 <b>2026 F/W 딥 뉴트럴 (+3점):</b> 런웨이를 지배한 차콜·딥 초콜릿 하의를 밝은 상의로 받쳐, 어두운 톤의 무게감과 가벼운 상체 대비를 동시에 얻었습니다.`;
+      }
+      // 2026: 차가운 뮤트 틸 + 따뜻한 다크 어스
+      if (mainTop.code.includes('66') && (bottom.code.includes('38') || bottom.code.includes('34'))) {
         colorScore += 4;
         tags.push('#2026뮤트컬러');
-        colorLesson += `<br><br>✨ <b>2026 트렌드 [뮤트 틸 블루 + 다크 어스]:</b> 청록빛이 감도는 66 틸 블루는 웜톤 브라운/차콜 하의와 만났을 때 '차가운 상의 + 따뜻한 하의'의 온도 대비를 만들어내어 매우 고급스럽습니다.`;
+        colorLesson += `<br><br>✨ <b>2026 [뮤트 틸 블루 + 웜 다크 어스] (+4점):</b> 차가운 상의와 따뜻한 하의의 온도 대비가 고급스럽습니다.`;
       }
 
       // =========================================================
-      // 2. 상의 구성 & 소재 레이어링 역학 (Layering & Texture)
+      // 2. 상의 구성 & 소재 레이어링 역학 (30점)
       // =========================================================
       if (mode === 'layered') {
-        layerScore += 4;
+        layerScore += 3;
         const innerDiff = shirt.lightness - sweat.lightness;
+        const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
+        const stripe = shirt.pattern.includes('stripe');
 
-        if (sweat.lightness <= 36 && shirt.lightness >= 75) {
-          layerScore += 5;
+        if (bridge && stripe) {
+          layerScore += 11;
+          tags.push('#브릿지분리법', '#스트라이프포인트');
+          layerLesson = `<b>[어두운 스웨트 + 스트라이프 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝히고, 밑단 2cm가 상·하의를 끊어줍니다. 스트라이프의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
+        } else if (bridge) {
+          layerScore += 8;
           tags.push('#브릿지분리법');
-          layerLesson = `<b>[스웨트+셔츠 레이어드: 완벽한 도화지 브릿지 (+9점)]</b> 어두운 ${sweat.name} 스웨트 안쪽에 고명도 ${shirt.name} 셔츠를 받쳐 입었습니다. <b>① 목선 위로 1.5cm 올라오는 셔츠 칼라</b>가 얼굴로 시선을 끌어올리고, <b>② 스웨트 시보리 아래로 2cm 나오는 셔츠 밑단</b>이 상·하의 색상을 깔끔하게 끊어주는 '시각적 완충재(Bridge)' 역할을 합니다.`;
-        } else if (shirt.pattern.includes('stripe')) {
-          layerScore += 4;
+          layerLesson = `<b>[완벽한 도화지 브릿지 (+11점)]</b> 어두운 ${sweat.name} 안쪽에 고명도 ${shirt.name} 셔츠를 받쳤습니다. <b>① 목선 위로 올라오는 칼라</b>가 시선을 얼굴로 끌어올리고, <b>② 스웨트 아래로 나오는 셔츠 밑단</b>이 상·하의를 끊어주는 '시각적 완충재' 역할을 합니다.`;
+        } else if (stripe && innerDiff >= 20) {
+          layerScore += 7;
           tags.push('#스트라이프포인트');
-          layerLesson = `<b>[패턴 텍스처 대비 (+8점)]</b> 매끈한 단색 더블페이스 스웨트 목선 안쪽에서 <b>${shirt.name}</b>의 촘촘한 핀 스트라이프가 살짝 비치며, 자칫 심심할 수 있는 면티 느낌을 단숨에 지적인 프레피 무드로 격상시킵니다.`;
-        } else if (Math.abs(innerDiff) < 10 && sweat.tone === shirt.tone) {
-          layerScore -= 4;
-          layerLesson = `<b>[레이어드 경계 흐림 (-4점)]</b> 겉에 입은 ${sweat.name} 스웨트와 속의 ${shirt.name} 셔츠의 밝기가 너무 비슷해 겹쳐 입은 입체감이 잘 드러나지 않습니다. 안쪽 셔츠는 오프화이트(01)나 삭스블루(64)처럼 확실히 밝은 색을 고르면 훨씬 또렷해집니다.`;
+          layerLesson = `<b>[패턴 텍스처 대비 (+10점)]</b> 단색 스웨트 목선 안쪽의 <b>${shirt.name}</b> 핀 스트라이프가 밋밋한 면티 느낌을 지적인 프레피 무드로 격상시킵니다.`;
         } else if (shirt.code.includes('69') && sweat.lightness <= 35) {
+          layerScore -= 6;
+          layerLesson = `<b>[목선 암전 (-3점)]</b> 어두운 스웨트 안에 가장 어두운 딥 네이비(69) 셔츠를 넣으면 목 주위가 무겁고 답답합니다. 딥 네이비 셔츠는 단독이나 밝은 스웨트 안에서 진가를 발휘합니다.`;
+        } else if (Math.abs(innerDiff) < 12 && sweat.tone === shirt.tone) {
           layerScore -= 5;
-          layerLesson = `<b>[목선 암전 현상 주의 (-5점)]</b> 어두운 스웨트 안에 가장 어두운 딥 네이비(69) 셔츠를 넣으면 목 주위가 무겁고 답답해 보입니다. 딥 네이비 셔츠는 단독으로 입거나 밝은 그레이(03)/베이지(31) 스웨트 안에 입을 때 진가를 발휘합니다.`;
+          layerLesson = `<b>[레이어드 경계 흐림 (-2점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})의 밝기가 너무 비슷해 겹쳐 입은 입체감이 사라집니다. 오프화이트(01)나 삭스블루(64)처럼 확실히 밝은 셔츠가 필요합니다.`;
+        } else if (innerDiff >= 20) {
+          layerScore += 4;
+          layerLesson = `<b>[밝은 셔츠로 받친 레이어드 (+7점)]</b> 스웨트의 광택 있는 탄탄한 두께감과 옥스포드 셔츠의 까슬한 조직감이 맞물립니다. 다만 칼라 대비가 약해 '브릿지'만큼의 임팩트는 없습니다.`;
         } else {
-          layerScore += 3;
-          layerLesson = `<b>[소재의 이질감 조화 (+7점)]</b> 겉감인 더블페이스 스웨트의 '은은한 광택과 탄탄한 두께감' 속에 2합사 핀포인트 옥스포드 셔츠의 '매트하고 까슬한 조직감'이 맞물려 깊이 있는 레이어드를 완성합니다.`;
+          layerScore += 1;
+          layerLesson = `<b>[무난한 레이어드 (+4점)]</b> 소재 대비는 있으나 색 대비가 약해 안쪽 셔츠가 존재감을 갖지 못합니다.`;
         }
       } else if (mode === 'sweat_only') {
-        layerScore += 4;
+        layerScore += 2;
         tags.push('#미니멀릴랙스');
-        layerLesson = `<b>[스웨트셔츠 단독 착용: 미니멀 구조미 (+4점)]</b> 셔츠를 생략하고 ${sweat.name} 스웨트만 단독으로 입은 구성입니다. 일반 기모 맨투맨과 달리 <b>유니클로 이중직(더블페이스) 원단</b>은 자체적인 형태 유지력(드레이프성)이 뛰어나 단품으로 입어도 어깨선이 입체적으로 살아납니다. 목선이 비어 보이므로 흰색 라운드 티셔츠(크루넥)를 목 끝에 0.5cm만 살짝 보이게 받쳐 입으면 완성도가 극대화됩니다.`;
+        layerLesson = `<b>[스웨트 단독 (+2점)]</b> ${sweat.name} 스웨트만 입은 미니멀 구성입니다. 더블페이스 원단이라 단품으로도 어깨선이 살지만, 레이어의 깊이가 없어 완성도는 제한됩니다. 흰색 크루넥 티를 0.5cm만 목 끝에 보이게 받치면 한 단계 올라갑니다.`;
       } else if (mode === 'shirt_only') {
         layerScore += 5;
         tags.push('#옥스포드단품');
-        layerLesson = `<b>[옥스포드 셔츠 단독 착용: 클래식 아메리칸 (+5점)]</b> 스웨트 없이 <b>${shirt.name}</b> 셔츠만 단독으로 착용했습니다. 2합사 핀포인트 옥스포드 원단은 일반 드레스 셔츠보다 실이 굵고 조직이 입체적이라 단품으로 입어도 속이 비치지 않고 탄탄한 실루엣을 잡아줍니다.`;
+        layerLesson = `<b>[옥스포드 셔츠 단독 (+5점)]</b> <b>${shirt.name}</b> 핀포인트 옥스포드는 단품으로도 탄탄한 실루엣을 잡아줍니다. 단순한 대신 실패 확률이 낮은 클래식 구성입니다.`;
       }
 
       // =========================================================
-      // 3. 아우터 & 2026 트렌드 / 클래식 복식 공식 (Silhouette & TPO)
+      // 3. 아우터 & 2026 트렌드 / 클래식 복식 공식 (30점)
       // =========================================================
       if (outer.id === 'outer_69') {
-        // JWA 네이비 감탄 블레이저
+        // 네이비 블레이저
         if (mode === 'shirt_only') {
-          silhouetteScore += 6;
-          tags.push('#아이비리그정석');
-          classicTrendLesson = `<b>[클래식 공식: 1960년대 아이비리그 프레피 (만점)]</b> 네이비 블레이저(금장 단추) + 옥스포드 셔츠 + ${bottom.name} 조합은 미국 동부 명문대 스타일에서 유래한 <b>남성 복식사의 영원한 바이블</b>입니다. 특히 네이비(69)와 ${bottom.name}의 배색은 신뢰감과 경쾌함을 동시에 주는 가장 지적인 출근·외출룩입니다.`;
-        } else if (mode === 'layered' || mode === 'sweat_only') {
-          if (sweat.code.includes('09')) {
-            colorScore -= 4;
-            classicTrendLesson = `<b>[네이비+블랙 명도 겹침 주의]</b> 69 네이비 블레이저 안에 09 쌩 블랙 스웨트를 넣으면 두 어두운 색이 뭉개져 블레이저의 테일러드 라인이 죽습니다. 블레이저 안에는 03 그레이나 31 베이지 스웨트를 매치해 보세요.`;
+          const navyOnNavy = shirt.code.includes('69');
+          if (navyOnNavy) {
+            silhouetteScore += 2;
+            classicTrendLesson = `<b>[네이비 블레이저 + 네이비 셔츠 (+2점)]</b> 같은 네이비 위에 네이비라 블레이저의 라인이 죽고 톤이 뭉칩니다. 블레이저에는 밝은 셔츠가 교과서입니다.`;
           } else {
-            silhouetteScore += 5;
+            silhouetteScore += 10;
+            tags.push('#아이비리그정석');
+            classicTrendLesson = `<b>[클래식 공식: 1960s 아이비리그 프레피 (+10점)]</b> 네이비 블레이저 + 옥스포드 셔츠 + ${bottom.name}는 남성 복식의 바이블입니다. 2026 F/W의 '1960년대 초 수트·프레피 무드', 구조적 테일러링 복귀 흐름과도 정확히 맞습니다.`;
+          }
+        } else {
+          if (sweat.code.includes('09')) {
+            colorScore -= 5;
+            classicTrendLesson = `<b>[네이비+블랙 명도 겹침 (-5점)]</b> 네이비 블레이저 안에 쌩 블랙 스웨트를 넣으면 두 어두운 색이 뭉개져 테일러드 라인이 죽습니다. 블레이저 안에는 03 그레이나 31 베이지 스웨트가 맞습니다.`;
+          } else {
+            const bright = sweat.lightness >= 70;
+            silhouetteScore += bright ? 8 : 5;
             tags.push('#2026네오프레피');
-            classicTrendLesson = `<b>[2026 핵심 트렌드: 하이-로우 믹스(High-Low Mix)]</b> 격식 있는 테일러드 블레이저 안에 캐주얼한 스웨트셔츠를 넣는 <b>'네오 프레피(Neo-Preppy)'</b> 스타일링입니다. 딱딱한 정장 느낌을 중화시켜 젊고 감각적인 2026년형 시티 캐주얼을 완성합니다.`;
+            classicTrendLesson = `<b>[2026 하이-로우 믹스: 네오 프레피 (+${bright ? 8 : 5}점)]</b> 구조적인 테일러드 블레이저 안에 부드러운 스웨트를 넣는 스타일링입니다. ${bright ? '밝은 스웨트가 네이비와 명확히 대비되어 블레이저 라인이 또렷합니다.' : '스웨트가 어두워 블레이저와의 대비가 약해 효과가 절반 수준입니다.'}`;
+          }
+          // 블레이저와 하의의 격 맞춤
+          if (bottom.code.includes('65')) {
+            silhouetteScore -= 1;
+            classicTrendLesson += `<br><br>👖 <b>블레이저 + 데님 (-1점):</b> 스마트 캐주얼로는 좋지만 격식의 결을 맞춘 치노보다 한 단계 캐주얼합니다.`;
+          } else {
+            silhouetteScore += 2;
+            classicTrendLesson += `<br><br>👖 <b>블레이저 + 치노 (+2점):</b> 격식의 결이 맞는 클래식 하의 선택입니다.`;
           }
         }
       } else if (outer.id === 'outer_31') {
         // 31 베이지 퍼프텍 쇼트 블루종
         if (mainTop.code.includes('31')) {
           colorScore -= 8;
-          classicTrendLesson = `<b>[아우터-상의 동일 색상 팽창 주의 (-8점)]</b> 31 베이지 퍼프텍 블루종 안에 똑같은 31 베이지 상의를 입으면 밝은 오트밀 색상이 상체 전체로 퍼져 부해 보입니다. 안쪽 상의는 어두운 차콜(08), 다크브라운(39), 틸블루(66)나 네이비(69)로 눌러주세요.`;
-        } else {
-          silhouetteScore += 5;
+          classicTrendLesson = `<b>[아우터-상의 동일 색상 (-8점)]</b> 베이지 블루종 안에 같은 베이지 상의를 입으면 밝은 색이 상체 전체로 번져 부해 보입니다. 안쪽은 차콜(08)·다크브라운(39)·틸블루(66)·네이비(69)로 눌러주세요.`;
+        } else if (mainTop.lightness <= 40) {
+          silhouetteScore += 7;
           tags.push('#숏블루종실루엣');
-          classicTrendLesson = `<b>[2026 비율 공식: 크롭 아우터 + 와이드 스트레이트 팬츠]</b> 기장이 짧은 퍼프텍 쇼트 블루종(31 베이지)이 허리선을 높여주고, 밑단 22cm의 여유로운 ${bottom.name}가 일자로 툭 떨어지며 다리가 가장 길어 보이는 A라인 비율을 만듭니다.`;
+          classicTrendLesson = `<b>[크롭 아우터 + 딥 톤 이너 (+7점)]</b> 짧은 베이지 블루종이 허리선을 높이고, 어두운 이너가 상체를 잡아주며 ${bottom.name}가 일자로 떨어져 비율이 길어 보입니다. 2026 F/W의 유틸리티·블루종 흐름에 맞습니다.`;
+        } else {
+          silhouetteScore += 3;
+          tags.push('#숏블루종실루엣');
+          classicTrendLesson = `<b>[크롭 아우터 (+3점)]</b> 비율 자체는 좋지만 이너도 밝아서 아우터와 이너의 대비가 약합니다. 이너를 한 톤 어둡게 가면 더 좋아집니다.`;
         }
       } else {
         // 아우터 안 입음
-        silhouetteScore += 4;
-        classicTrendLesson = `<b>[실내 및 간절기 단품 실루엣]</b> 아우터를 벗었을 때 상·하의 1:1 비율이 가장 직접적으로 드러납니다. 수선 완료된 하의 기장(${bottom.code.includes('65') ? '73cm 쿼터 브레이크' : '72cm 노브레이크'}) 덕분에 상의를 밖으로 빼 입어도 다리가 짧아 보이지 않는 최적의 기장 세팅입니다.`;
+        silhouetteScore += 2;
+        classicTrendLesson = `<b>[아우터 없는 단품 실루엣 (+2점)]</b> 상·하의 1:1 비율이 그대로 드러납니다. 구조를 잡아줄 아우터가 없어 룩의 격이 한 단계 낮고, 완성도는 상·하의 배색에 전적으로 좌우됩니다.`;
       }
 
       // =========================================================
-      // 4. 실전 착용 디테일 처방전 (Actionable Styling Tip)
+      // 4. 실전 착용 디테일 처방전
       // =========================================================
       if (mode === 'shirt_only') {
         if (outer.id === 'outer_69') {
-          stylingTip = `📌 <b>착용 디테일:</b> 블레이저를 입을 때는 옥스포드 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하시고, 바지 밑위(28.5cm)가 안정적이므로 갈색이나 블랙 가죽 벨트를 채워주시면 완벽합니다.`;
+          stylingTip = `📌 <b>착용 디테일:</b> 블레이저를 입을 때는 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하고, 갈색이나 블랙 가죽 벨트를 채워주면 완벽합니다.`;
         } else {
-          stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 무심하게 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
+          stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
         }
       } else if (mode === 'layered') {
-        stylingTip = `📌 <b>착용 디테일:</b> 옥스포드 셔츠의 카라 끝 단추(버튼다운)를 반드시 잠가야 스웨트 목선 안에서 깃이 무너지지 않고 입체적인 아치형(Roll)을 유지합니다. 소매 끝으로도 셔츠 커프스를 1cm 살짝 빼주세요.`;
+        stylingTip = `📌 <b>착용 디테일:</b> 옥스포드 셔츠의 카라 끝 단추(버튼다운)를 반드시 잠가야 스웨트 목선 안에서 깃이 무너지지 않고 아치형(Roll)을 유지합니다. 소매 끝으로 셔츠 커프스를 1cm 빼주세요.`;
       } else {
-        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 하의가 72~73cm 정석 기장으로 세팅되어 있으므로, 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
+        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 하의가 72~73cm 정석 기장이므로, 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
       }
 
       // 점수 보정
-      colorScore = Math.min(40, Math.max(15, colorScore));
-      layerScore = Math.min(30, Math.max(12, layerScore));
-      silhouetteScore = Math.min(30, Math.max(15, silhouetteScore));
+      const L = SCORE_RULES.limits;
+      colorScore = Math.min(L.color[1], Math.max(L.color[0], colorScore));
+      layerScore = Math.min(L.layer[1], Math.max(L.layer[0], layerScore));
+      silhouetteScore = Math.min(L.silhouette[1], Math.max(L.silhouette[0], silhouetteScore));
       const total = colorScore + layerScore + silhouetteScore;
 
-      let grade = 'B';
-      let mood = '깔끔한 데일리 룩';
-      if (total >= 95) { grade = 'S+'; mood = '교과서급 황금 밸런스'; }
-      else if (total >= 90) { grade = 'S'; mood = '검증된 클래식 스탠다드'; }
-      else if (total >= 83) { grade = 'A'; mood = '안정적인 데일리 코디'; }
-      else if (total < 76) { grade = 'C'; mood = '색상/명도 분리 보완 필요'; }
+      let grade = 'C';
+      let mood = '색상/명도 분리 보완 필요';
+      for (const [min, g, m] of SCORE_RULES.grade) {
+        if (total >= min) { grade = g; mood = m; break; }
+      }
 
       const modeLabel = mode === 'layered' ? '스웨트+셔츠 레이어드' : (mode === 'sweat_only' ? '스웨트 단독' : '옥스포드 셔츠 단독');
 
@@ -605,7 +687,7 @@
       localStorage.removeItem('wardrobe_csv_url');
       document.getElementById('csvUrlInput').value = '';
       items = [...DEFAULT_ITEMS];
-      document.getElementById('dataSourceBadge').textContent = '클래식 공식 & 2026 트렌드 학습 엔진';
+      document.getElementById('dataSourceBadge').textContent = '클래식 공식 + 2026 F/W 트렌드 룰 엔진';
       renderAll();
       toggleModal('sheetModal');
     }
