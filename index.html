@@ -495,7 +495,7 @@
           if (structured) {
             sweatLine = g < 0
               ? ` 스웨트(${cm(sweat.len)})는 ${outer.short}(${cm(outer.len)})보다 ${cm(-g)} 짧아 아우터 안에 가려져 깔끔합니다.`
-              : ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밖으로 ${cm(g)} 나와 라인이 흐트러집니다. 스웨트 밑단을 한 번 접어 올려 아우터 안에 가리세요.`;
+              : ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밖으로 ${cm(g)} 나와 라인이 흐트러집니다. 구조적 아우터 안에서는 이너가 아우터보다 짧아야 깔끔하므로, 더 짧은 이너나 더 긴 아우터로 바꾸는 것이 가장 확실합니다. 그대로 입겠다면 스웨트 앞쪽만 살짝 넣는 방법이 있습니다.`;
           } else {
             sweatLine = g >= 3 && g <= 8
               ? ` 스웨트(${cm(sweat.len)})가 ${outer.short}(${cm(outer.len)}) 밑단 아래로 ${cm(g)} 보여 층이 자연스럽게 읽힙니다.`
