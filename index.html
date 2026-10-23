@@ -195,7 +195,7 @@
       { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용' }
     ];
 
-    // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23
+    // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23 (베스트 추가)
     // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
     // style(아우터만): blazer | coat | blouson | vest | jacket — 비우면 이름에서 추정
     // pattern: solid | stripe | check 등 (solid 외에는 패턴으로 취급)
@@ -203,6 +203,7 @@
       // 아우터
       { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', pattern: 'solid' },
       { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', pattern: 'solid' },
+      { id: 'outer_vest09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 컴팩트 베스트', desc: '경량 패딩 베스트 / 블랙', hex: '#111827', style: 'vest', pattern: 'solid' },
 
       // 오버사이즈 스웨트셔츠
       { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', pattern: 'solid' },
