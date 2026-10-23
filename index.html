@@ -17,15 +17,6 @@
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
-    .stripe-gray {
-      background: repeating-linear-gradient(90deg, #ffffff, #ffffff 4px, #94a3b8 4px, #94a3b8 6px);
-    }
-    .stripe-blue {
-      background: repeating-linear-gradient(90deg, #ffffff, #ffffff 4px, #3b82f6 4px, #3b82f6 6px);
-    }
-    .none-pattern {
-      background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 5px, #e2e8f0 5px, #e2e8f0 10px);
-    }
     .chip-active {
       border-color: #0f172a !important;
       background-color: #0f172a !important;
@@ -179,6 +170,13 @@
         <button onclick="saveAndLoadCsv()" class="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">연동 및 불러오기</button>
         <button onclick="resetToDefaultData()" class="py-2 px-3 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg">초기화</button>
       </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-[11px] leading-relaxed text-slate-600">
+        <b class="text-slate-800">새 옷 추가 = 시트에 한 줄</b><br>
+        필수: <b>id · category · code · name · hex</b><br>
+        category는 outer / sweat / shirt / bottom 중 하나, hex는 #RRGGBB. 아우터는 style(blazer·coat·blouson·jacket)도 적어주세요.<br>
+        명도·톤·온도는 hex에서 자동 계산되니 비워두면 됩니다.
+      </div>
+      <div id="dataCheck" class="max-h-36 overflow-y-auto text-[11px] leading-relaxed space-y-0.5 border border-slate-200 rounded-lg p-2.5"></div>
       <div class="border-t border-slate-100 pt-3">
         <button onclick="downloadTemplateCsv()" class="w-full py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-lg">
           📥 시트용 CSV 템플릿 다운로드
@@ -188,75 +186,177 @@
   </div>
 
   <script>
-    const DEFAULT_ITEMS = [
-      // 아우터
-      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 없음', desc: '실내 / 단품 레이어드', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', tone: 'earth', lightness: 84, temp: 'warm', pattern: 'solid' },
-      { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', tone: 'navy', lightness: 16, temp: 'cool', pattern: 'solid' },
-
-      // 오버사이즈 스웨트셔츠 (안 입음 포함)
-      { id: 'sweat_none', category: 'sweat', code: 'NONE', name: '❌ 스웨트 안 입음', desc: '옥스포드 셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', tone: 'mono', lightness: 82, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', tone: 'mono', lightness: 26, temp: 'cool', pattern: 'solid' },
-      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', tone: 'mono', lightness: 10, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', tone: 'earth', lightness: 86, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', tone: 'earth', lightness: 18, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', tone: 'blue', lightness: 35, temp: 'cool', pattern: 'solid' },
-
-      // 옥스포드 셔츠 (안 입음 포함)
-      { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', tone: 'mono', lightness: 96, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', tone: 'mono', lightness: 64, temp: 'neutral', pattern: 'solid' },
-      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', tone: 'earth', lightness: 87, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', tone: 'blue', lightness: 78, temp: 'cool', pattern: 'solid' },
-      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 짙은 남색', hex: '#1e293b', tone: 'navy', lightness: 17, temp: 'cool', pattern: 'solid' },
-      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', tone: 'mono', lightness: 80, temp: 'neutral', pattern: 'stripe-gray' },
-      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', tone: 'blue', lightness: 83, temp: 'cool', pattern: 'stripe-blue' },
-
-      // 하의 (5벌)
-      { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', tone: 'earth', lightness: 32, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_34', category: 'bottom', code: '34 BROWN', name: '브라운 치노', desc: '황토빛 카멜/탠 브라운 (72cm)', hex: '#D4BD99', tone: 'earth', lightness: 68, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_38', category: 'bottom', code: '38 DARK BROWN', name: '다크 브라운 치노', desc: '에스프레소 밤색 (72cm)', hex: '#382821', tone: 'earth', lightness: 19, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적인 차콜 쥐색 (72cm)', hex: '#374151', tone: 'mono', lightness: 25, temp: 'cool', pattern: 'solid' },
-      { id: 'bottom_65', category: 'bottom', code: '65 MID BLUE', name: '레귤러핏 진 (데님)', desc: '정통 중청 데님 (73cm)', hex: '#3b5980', tone: 'blue', lightness: 38, temp: 'cool', pattern: 'solid' }
+    // ==== PURE LOGIC START (화면과 무관한 데이터·채점 로직) ====
+    const CATEGORIES = ['outer', 'sweat', 'shirt', 'bottom'];
+    const TONES = ['mono', 'navy', 'blue', 'earth', 'accent'];
+    const NONE_ITEMS = [
+      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 없음', desc: '실내 / 단품 레이어드' },
+      { id: 'sweat_none', category: 'sweat', code: 'NONE', name: '❌ 스웨트 안 입음', desc: '옥스포드 셔츠 단독 착용' },
+      { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용' }
     ];
 
-    let items = [...DEFAULT_ITEMS];
-    let state = {
-      outer: 'outer_69',
-      sweat: 'sweat_03',
-      shirt: 'shirt_64',
-      bottom: 'bottom_56'
-    };
+    // 옷 데이터(기본값). 시트를 연동하면 시트가 우선합니다.
+    // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
+    // style(아우터만): blazer | coat | blouson | jacket — 비우면 이름에서 추정
+    // pattern: solid | stripe | check 등 (solid 외에는 패턴으로 취급)
+    const DEFAULT_ITEMS = [
+      // 아우터
+      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', pattern: 'solid' },
+      { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', pattern: 'solid' },
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      const savedCsvUrl = localStorage.getItem('wardrobe_csv_url');
-      if (savedCsvUrl) {
-        document.getElementById('csvUrlInput').value = savedCsvUrl;
-        await fetchSheetData(savedCsvUrl);
-      }
-      renderAll();
-    });
+      // 오버사이즈 스웨트셔츠
+      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', pattern: 'solid' },
+      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', pattern: 'solid' },
+      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', pattern: 'solid' },
+      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', pattern: 'solid' },
+      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', pattern: 'solid' },
+      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', pattern: 'solid' },
 
-    function getItem(id) {
-      return items.find(i => i.id === id);
+      // 옥스포드 셔츠
+      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', pattern: 'solid' },
+      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', pattern: 'solid' },
+      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', pattern: 'solid' },
+      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', pattern: 'solid' },
+      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 남색', hex: '#1e293b', pattern: 'solid' },
+      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', pattern: 'stripe' },
+      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', pattern: 'stripe' },
+
+      // 하의
+      { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', pattern: 'solid' },
+      { id: 'bottom_34', category: 'bottom', code: '34 BROWN', name: '브라운 치노', desc: '황토빛 카멜/탠 브라운 (72cm)', hex: '#D4BD99', pattern: 'solid' },
+      { id: 'bottom_38', category: 'bottom', code: '38 DARK BROWN', name: '다크 브라운 치노', desc: '에스프레소 밤색 (72cm)', hex: '#382821', pattern: 'solid' },
+      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적인 차콜 쥐색 (72cm)', hex: '#374151', pattern: 'solid' },
+      { id: 'bottom_65', category: 'bottom', code: '65 MID BLUE', name: '레귤러핏 진 (데님)', desc: '정통 중청 데님 (73cm)', hex: '#3b5980', pattern: 'solid' }
+    ];
+
+    // ---------- 색 분석: hex → 지각 명도(L*) / 채도(C) / 색상각(h) ----------
+    function analyzeColor(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
+      if (!m) return null;
+      const lin = i => {
+        const c = parseInt(m[1].slice(i, i + 2), 16) / 255;
+        return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      };
+      const r = lin(0), g = lin(2), b = lin(4);
+      const X = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047;
+      const Y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const Z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883;
+      const f = v => v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116;
+      const L = 116 * f(Y) - 16, a = 500 * (f(X) - f(Y)), bb = 200 * (f(Y) - f(Z));
+      return { hex: '#' + m[1].toLowerCase(), L, C: Math.hypot(a, bb), h: (Math.atan2(bb, a) * 180 / Math.PI + 360) % 360 };
     }
 
-    function selectItem(category, id) {
-      // 상의 둘 다 '안 입음' 선택 시 자동 전환 안전장치
-      if (category === 'sweat' && id === 'sweat_none' && state.shirt === 'shirt_none') {
-        state.shirt = 'shirt_01';
-      } else if (category === 'shirt' && id === 'shirt_none' && state.sweat === 'sweat_none') {
-        state.sweat = 'sweat_03';
+    // 톤 자동 판정: mono(무채색) / navy(짙은 남색) / blue / earth(베이지·브라운·카키·올리브) / accent(그 외 유채색)
+    function deriveTone(c) {
+      if (c.C < 8) return 'mono';
+      if (c.h >= 20 && c.h <= 140 && c.C < 35) return 'earth';
+      if (c.h >= 225 && c.h <= 300) {
+        if (c.C < 12) return 'mono';
+        return c.L <= 22 ? 'navy' : 'blue';
       }
-      state[category] = id;
-      renderAll();
+      return c.C < 12 ? 'mono' : 'accent';
+    }
+    function deriveTemp(c) {
+      if (c.C < 6) return 'neutral';
+      if ((c.h >= 20 && c.h <= 140) || c.h >= 330 || c.h < 20) return 'warm';
+      if (c.h > 140 && c.h <= 300) return 'cool';
+      return 'neutral';
+    }
+    function inferOuterStyle(name) {
+      if (/블레이저|blazer/i.test(name)) return 'blazer';
+      if (/코트|트렌치|coat|trench/i.test(name)) return 'coat';
+      if (/블루종|봉버|bomber|blouson/i.test(name)) return 'blouson';
+      return 'jacket';
+    }
+
+    // ---------- CSV 파서 (따옴표/쉼표 포함 셀 지원) ----------
+    function parseCsv(text) {
+      const rows = [];
+      let row = [], cell = '', inQ = false;
+      text = text.replace(/^﻿/, '');
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (inQ) {
+          if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+          else if (ch === '"') inQ = false;
+          else cell += ch;
+        } else if (ch === '"') inQ = true;
+        else if (ch === ',') { row.push(cell); cell = ''; }
+        else if (ch === '\n' || ch === '\r') {
+          if (ch === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell); cell = '';
+          if (row.some(c => c.trim() !== '')) rows.push(row);
+          row = [];
+        } else cell += ch;
+      }
+      row.push(cell);
+      if (row.some(c => c.trim() !== '')) rows.push(row);
+      return rows;
+    }
+    // 헤더 이름 기준으로 읽기 때문에 열 순서가 바뀌거나 열이 빠져 있어도 동작합니다.
+    function csvToRawItems(text) {
+      const rows = parseCsv(text);
+      if (rows.length < 2) return [];
+      const head = rows[0].map(h => h.trim().toLowerCase());
+      return rows.slice(1).map(r => {
+        const o = {};
+        head.forEach((h, i) => { if (h) o[h] = (r[i] || '').trim(); });
+        return o;
+      });
+    }
+
+    // ---------- 원본 행 → 채점용 아이템 + 데이터 점검 ----------
+    function buildWardrobe(rawList) {
+      const warnings = [];
+      const out = [];
+      const seen = new Set();
+      NONE_ITEMS.forEach(n => out.push(prepareNone(n)));
+
+      rawList.forEach((raw, idx) => {
+        const label = raw.id || `${idx + 2}번째 행`;
+        if (!raw.id) { warnings.push(`❌ ${label}: id가 비어 있어 제외했습니다.`); return; }
+        if (/_none$/.test(raw.id)) return; // 안 입음 항목은 앱이 자동 관리
+        if (seen.has(raw.id)) { warnings.push(`❌ ${label}: id가 중복되어 뒤의 행을 제외했습니다.`); return; }
+        if (!CATEGORIES.includes(raw.category)) { warnings.push(`❌ ${label}: category는 ${CATEGORIES.join('/')} 중 하나여야 합니다 (입력: "${raw.category || ''}").`); return; }
+        const color = analyzeColor(raw.hex || '');
+        if (!color) { warnings.push(`❌ ${label}: hex가 #RRGGBB 형식이 아니어서 제외했습니다 (입력: "${raw.hex || ''}").`); return; }
+        seen.add(raw.id);
+
+        const derivedTone = deriveTone(color);
+        let tone = (raw.tone || '').toLowerCase();
+        if (tone && !TONES.includes(tone)) { warnings.push(`⚠️ ${label}: tone "${raw.tone}"은 알 수 없는 값이라 자동 판정(${derivedTone})을 사용합니다.`); tone = ''; }
+        if (tone && tone !== derivedTone) warnings.push(`ℹ️ ${label}: tone을 ${tone}로 지정했지만 색상값상 ${derivedTone}에 가깝습니다. 의도한 게 아니면 tone 칸을 비워두세요.`);
+        const lightness = Math.round(color.L);
+        if (raw.lightness !== undefined && raw.lightness !== '' && Math.abs(Number(raw.lightness) - lightness) > 6) {
+          warnings.push(`ℹ️ ${label}: lightness 입력(${raw.lightness})과 hex 계산값(${lightness})이 다릅니다. 앱은 hex 계산값을 사용합니다.`);
+        }
+        const pattern = (raw.pattern || 'solid').toLowerCase();
+        let style = (raw.style || '').toLowerCase();
+        if (raw.category === 'outer' && !style) {
+          style = inferOuterStyle(raw.name || '');
+          warnings.push(`ℹ️ ${label}: 아우터 style이 비어 이름으로 "${style}"를 추정했습니다 (blazer/coat/blouson/jacket 중 지정 가능).`);
+        }
+        out.push({
+          id: raw.id, category: raw.category, code: raw.code || raw.id, name: raw.name || raw.id, desc: raw.desc || '',
+          hex: color.hex, none: false, lightness, chroma: Math.round(color.C), hue: Math.round(color.h),
+          tone: tone || derivedTone, temp: (raw.temp || '').toLowerCase() || deriveTemp(color),
+          pattern, patterned: pattern !== 'solid' && pattern !== 'none', style
+        });
+      });
+
+      CATEGORIES.forEach(c => {
+        if (!out.some(i => i.category === c && !i.none)) warnings.push(`❌ ${c} 카테고리에 옷이 하나도 없습니다.`);
+      });
+      return { items: out, warnings };
+    }
+    function prepareNone(n) {
+      return { ...n, hex: '#f8fafc', none: true, lightness: 95, chroma: 0, hue: 0, tone: 'none', temp: 'neutral', pattern: 'none', patterned: false, style: '' };
     }
 
     // 상의 착용 형태 판별 ('layered' | 'sweat_only' | 'shirt_only')
     function getWearingMode(sweat, shirt) {
-      if (sweat.id !== 'sweat_none' && shirt.id !== 'shirt_none') return 'layered';
-      if (sweat.id !== 'sweat_none' && shirt.id === 'shirt_none') return 'sweat_only';
+      if (!sweat.none && !shirt.none) return 'layered';
+      if (!sweat.none && shirt.none) return 'sweat_only';
       return 'shirt_only';
     }
 
@@ -265,6 +365,7 @@
     // 기준: 무난한 조합 = 70점대 / 의도가 보이는 조합 = 80점대 / 90+ = 공식과 트렌드가 동시에 맞는 조합
     // 트렌드 근거: 2026 F/W 남성복 — 블랙·차콜·딥초콜릿 지배, 슬림·구조적 테일러링 복귀,
     //             1960s 초반 프레피 무드, 니트/스웨트 레이어링, 셔츠 칼라 디테일 강조
+    // 모든 규칙은 옷의 번호가 아니라 속성(명도·톤·색상각·패턴·아우터 style)으로 판정합니다.
     // =========================================================
     const SCORE_RULES = {
       base:   { color: 28, layer: 17, silhouette: 18 },   // 각 영역 기본점 (만점: 40 / 30 / 30)
@@ -272,6 +373,11 @@
       grade:  [[95, 'S+', '디자이너도 고개를 끄덕일 완성형'], [89, 'S', '공식과 트렌드가 모두 맞는 룩'],
                [81, 'A', '의도가 느껴지는 좋은 코디'], [72, 'B', '무난한 데일리 룩']]  // 72 미만은 C
     };
+
+    const isOlive = i => i.tone === 'earth' && i.hue >= 90 && i.hue <= 150 && i.lightness <= 45 && i.chroma >= 8;
+    const isBrownFamily = i => i.tone === 'earth' && i.hue < 75;
+    const isMutedTeal = i => i.tone === 'blue' && i.hue >= 200 && i.hue <= 260 && i.lightness <= 45 && i.chroma <= 18;
+    const isDenim = i => i.tone === 'blue' && /진|데님|denim|jean/i.test(`${i.name} ${i.desc} ${i.code}`);
 
     // 핵심 학습형 채점 엔진
     function evaluateOutfit(outer, sweat, shirt, bottom) {
@@ -290,16 +396,14 @@
       let stylingTip = '';
 
       // 실제로 보이는 아이템 (아우터 포함, '안 입음' 제외)
-      const visible = [outer, sweat, shirt, bottom].filter(i => i.id.indexOf('_none') === -1);
+      const visible = [outer, sweat, shirt, bottom].filter(i => !i.none);
 
       // =========================================================
       // 1. 색채학 & 명도 대비 원리 (40점)
       // =========================================================
       const lightDiff = Math.abs(mainTop.lightness - bottom.lightness);
-      const mainCodeNum = mainTop.code.split(' ')[0];
-      const bottomCodeNum = bottom.code.split(' ')[0];
 
-      if (mainCodeNum === bottomCodeNum || (mainTop.code.includes('39') && bottom.code.includes('38'))) {
+      if (mainTop.tone === bottom.tone && lightDiff <= 8) {
         colorScore -= 10;
         tags.push('#톤겹침주의');
         colorLesson = `<b>[동일 색상 충돌 (-10점)]</b> 주 상의(${mainTop.name}, 명도 ${mainTop.lightness})와 하의(${bottom.name}, 명도 ${bottom.lightness})가 사실상 같은 색입니다. 상·하의 경계가 사라져 '한 벌 작업복'처럼 보입니다.`;
@@ -332,40 +436,37 @@
         colorLesson += `<br><br>🎚️ <b>명도 3단 구성 (+4점):</b> 밝음·중간·어두움이 모두 들어가 평면적이지 않고 입체감이 생깁니다.`;
       }
 
-      // 유채색 계열이 3개 이상 섞이면 감점 (무채색·네이비는 제외)
-      const chroma = new Set(visible.map(i => i.tone).filter(t => t === 'earth' || t === 'blue'));
-      const warmCount = visible.filter(i => i.tone === 'earth').length;
-      const blueCount = visible.filter(i => i.tone === 'blue').length;
-      if (chroma.size >= 2 && warmCount + blueCount >= 3) {
+      // 유채색(어스·블루·포인트) 계열이 3벌 이상 섞이면 감점 (무채색·네이비는 제외)
+      const chromatic = visible.filter(i => ['earth', 'blue', 'accent'].includes(i.tone));
+      if (new Set(chromatic.map(i => i.tone)).size >= 2 && chromatic.length >= 3) {
         colorScore -= 4;
         tags.push('#색수과다');
-        colorLesson += `<br><br>⚠️ <b>유채색 과다 (-4점):</b> 어스톤과 블루가 3벌 이상 섞여 색이 산만합니다. 유채색은 2벌 이내로 줄이세요.`;
+        colorLesson += `<br><br>⚠️ <b>유채색 과다 (-4점):</b> 어스톤·블루·포인트 컬러가 3벌 이상 섞여 색이 산만합니다. 유채색은 2벌 이내로 줄이세요.`;
       }
 
       // 전신 다크 (밝은 브릿지 없음)
-      const allDark = visible.length >= 3 && visible.every(i => i.lightness < 40);
-      if (allDark) {
+      if (visible.length >= 3 && visible.every(i => i.lightness < 40)) {
         colorScore -= 6;
         tags.push('#전신다크');
         colorLesson += `<br><br>⚠️ <b>밝은 포인트 없는 전신 다크 (-6점):</b> 블랙·차콜 바람이 불어도 윤곽을 잡아줄 밝은 면(셔츠 깃·밑단)이 없으면 무겁고 둔해 보입니다.`;
       }
 
-      // 올리브 치노: 검증된 중화 파트너
-      if (bottom.code.includes('56') && ['03', '31', '09', '01', '64', '69'].some(c => mainTop.code.includes(c))) {
+      // 올리브 하의: 무채색·네이비·밝은 상의와 만나는 검증된 중화 파트너
+      if (isOlive(bottom) && (['mono', 'navy'].includes(mainTop.tone) || mainTop.lightness >= 70)) {
         colorScore += 2;
-        colorLesson += `<br><br>💡 <b>올리브(56)의 중화 작용 (+2점):</b> 채도가 빠진 올리브는 무채색·네이비·베이지 어디에나 어울리는 '제2의 데님'입니다.`;
+        colorLesson += `<br><br>💡 <b>올리브 하의의 중화 작용 (+2점):</b> 채도가 빠진 올리브는 무채색·네이비·베이지 어디에나 어울리는 '제2의 데님'입니다.`;
       }
       // 2026 F/W: 차콜·딥초콜릿 하의 + 밝은 상의 (런웨이를 지배한 딥 뉴트럴을 밝은 면과 대비)
-      if (['38', '08'].some(c => bottom.code.includes(c)) && mainTop.lightness >= 70) {
+      if (bottom.lightness <= 30 && ['mono', 'earth'].includes(bottom.tone) && mainTop.lightness >= 70) {
         colorScore += 3;
         tags.push('#2026딥뉴트럴');
         colorLesson += `<br><br>🖤 <b>2026 F/W 딥 뉴트럴 (+3점):</b> 런웨이를 지배한 차콜·딥 초콜릿 하의를 밝은 상의로 받쳐, 어두운 톤의 무게감과 가벼운 상체 대비를 동시에 얻었습니다.`;
       }
-      // 2026: 차가운 뮤트 틸 + 따뜻한 다크 어스
-      if (mainTop.code.includes('66') && bottom.tone === 'earth' && bottom.temp === 'warm' && bottom.lightness <= 45) {
+      // 2026: 차가운 뮤트 틸 + 따뜻한 다크 브라운
+      if (isMutedTeal(mainTop) && isBrownFamily(bottom) && bottom.lightness <= 45) {
         colorScore += 4;
         tags.push('#2026뮤트컬러');
-        colorLesson += `<br><br>✨ <b>2026 [뮤트 틸 블루 + 웜 다크 어스] (+4점):</b> 차가운 상의와 따뜻한 하의의 온도 대비가 고급스럽습니다.`;
+        colorLesson += `<br><br>✨ <b>2026 [뮤트 틸 블루 + 웜 다크 브라운] (+4점):</b> 차가운 상의와 따뜻한 하의의 온도 대비가 고급스럽습니다.`;
       }
 
       // =========================================================
@@ -375,26 +476,25 @@
         layerScore += 3;
         const innerDiff = shirt.lightness - sweat.lightness;
         const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
-        const stripe = shirt.pattern.includes('stripe');
 
-        if (bridge && stripe) {
+        if (bridge && shirt.patterned) {
           layerScore += 11;
-          tags.push('#브릿지분리법', '#스트라이프포인트');
-          layerLesson = `<b>[어두운 스웨트 + 스트라이프 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝히고, 밑단 2cm가 상·하의를 끊어줍니다. 스트라이프의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
+          tags.push('#브릿지분리법', '#패턴포인트');
+          layerLesson = `<b>[어두운 스웨트 + 패턴 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝히고, 밑단 2cm가 상·하의를 끊어줍니다. 패턴의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
         } else if (bridge) {
           layerScore += 8;
           tags.push('#브릿지분리법');
           layerLesson = `<b>[완벽한 도화지 브릿지 (+11점)]</b> 어두운 ${sweat.name} 안쪽에 고명도 ${shirt.name} 셔츠를 받쳤습니다. <b>① 목선 위로 올라오는 칼라</b>가 시선을 얼굴로 끌어올리고, <b>② 스웨트 아래로 나오는 셔츠 밑단</b>이 상·하의를 끊어주는 '시각적 완충재' 역할을 합니다.`;
-        } else if (stripe && innerDiff >= 20) {
+        } else if (shirt.patterned && innerDiff >= 20) {
           layerScore += 7;
-          tags.push('#스트라이프포인트');
-          layerLesson = `<b>[패턴 텍스처 대비 (+10점)]</b> 단색 스웨트 목선 안쪽의 <b>${shirt.name}</b> 핀 스트라이프가 밋밋한 면티 느낌을 지적인 프레피 무드로 격상시킵니다.`;
-        } else if (shirt.code.includes('69') && sweat.lightness <= 35) {
+          tags.push('#패턴포인트');
+          layerLesson = `<b>[패턴 텍스처 대비 (+10점)]</b> 단색 스웨트 목선 안쪽의 <b>${shirt.name}</b> 패턴이 밋밋한 면티 느낌을 지적인 프레피 무드로 격상시킵니다.`;
+        } else if (shirt.lightness <= 25 && sweat.lightness <= 35) {
           layerScore -= 6;
-          layerLesson = `<b>[목선 암전 (-3점)]</b> 어두운 스웨트 안에 가장 어두운 딥 네이비(69) 셔츠를 넣으면 목 주위가 무겁고 답답합니다. 딥 네이비 셔츠는 단독이나 밝은 스웨트 안에서 진가를 발휘합니다.`;
+          layerLesson = `<b>[목선 암전 (-3점)]</b> 어두운 스웨트 안에 매우 어두운 ${shirt.name} 셔츠를 넣으면 목 주위가 무겁고 답답합니다. 이런 셔츠는 단독이나 밝은 스웨트 안에서 진가를 발휘합니다.`;
         } else if (Math.abs(innerDiff) < 12 && sweat.tone === shirt.tone) {
           layerScore -= 5;
-          layerLesson = `<b>[레이어드 경계 흐림 (-2점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})의 밝기가 너무 비슷해 겹쳐 입은 입체감이 사라집니다. 오프화이트(01)나 삭스블루(64)처럼 확실히 밝은 셔츠가 필요합니다.`;
+          layerLesson = `<b>[레이어드 경계 흐림 (-2점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})의 밝기가 너무 비슷해 겹쳐 입은 입체감이 사라집니다. 확실히 밝은 셔츠가 필요합니다.`;
         } else if (innerDiff >= 20) {
           layerScore += 4;
           layerLesson = `<b>[밝은 셔츠로 받친 레이어드 (+7점)]</b> 스웨트의 광택 있는 탄탄한 두께감과 옥스포드 셔츠의 까슬한 조직감이 맞물립니다. 다만 칼라 대비가 약해 '브릿지'만큼의 임팩트는 없습니다.`;
@@ -415,50 +515,72 @@
       // =========================================================
       // 3. 아우터 & 2026 트렌드 / 클래식 복식 공식 (30점)
       // =========================================================
-      if (outer.id === 'outer_69') {
-        // 네이비 블레이저
+      const style = outer.none ? 'none' : (outer.style || 'jacket');
+      const outerGap = Math.abs(outer.lightness - mainTop.lightness);
+      const darkMerge = !outer.none && outer.lightness <= 30 && mainTop.lightness <= 30 && outerGap <= 8;
+      const sameBlock = !outer.none && outer.tone === mainTop.tone && outerGap <= 10;
+
+      if (style === 'blazer' || style === 'coat') {
+        const isBlazer = style === 'blazer';
+        const label = isBlazer ? '블레이저' : '코트';
         if (mode === 'shirt_only') {
-          const navyOnNavy = shirt.code.includes('69');
-          if (navyOnNavy) {
+          if (darkMerge) {
             silhouetteScore += 2;
-            classicTrendLesson = `<b>[네이비 블레이저 + 네이비 셔츠 (+2점)]</b> 같은 네이비 위에 네이비라 블레이저의 라인이 죽고 톤이 뭉칩니다. 블레이저에는 밝은 셔츠가 교과서입니다.`;
-          } else {
+            classicTrendLesson = `<b>[어두운 ${label} + 어두운 셔츠 (+2점)]</b> ${outer.name} 안에 같은 명도의 ${shirt.name}를 입으면 ${label}의 라인이 죽고 톤이 뭉칩니다. 밝은 셔츠가 교과서입니다.`;
+          } else if (isBlazer) {
             silhouetteScore += 10;
             tags.push('#아이비리그정석');
-            classicTrendLesson = `<b>[클래식 공식: 1960s 아이비리그 프레피 (+10점)]</b> 네이비 블레이저 + 옥스포드 셔츠 + ${bottom.name}는 남성 복식의 바이블입니다. 2026 F/W의 '1960년대 초 수트·프레피 무드', 구조적 테일러링 복귀 흐름과도 정확히 맞습니다.`;
+            classicTrendLesson = `<b>[클래식 공식: 1960s 아이비리그 프레피 (+10점)]</b> ${outer.name} + 옥스포드 셔츠 + ${bottom.name}는 남성 복식의 바이블입니다. 2026 F/W의 '1960년대 초 수트·프레피 무드', 구조적 테일러링 복귀 흐름과도 정확히 맞습니다.`;
+          } else {
+            silhouetteScore += 8;
+            tags.push('#롱코트정석');
+            classicTrendLesson = `<b>[구조적 롱 아우터 + 셔츠 (+8점)]</b> ${outer.name}의 긴 수직선과 셔츠의 깔끔한 칼라가 만드는 클래식한 실루엣입니다. 2026 F/W의 구조적 아우터 흐름에 맞습니다.`;
           }
+        } else if (darkMerge) {
+          colorScore -= 5;
+          classicTrendLesson = `<b>[${label}와 스웨트의 명도 겹침 (-5점)]</b> ${outer.name}(명도 ${outer.lightness}) 안에 ${sweat.name}(명도 ${sweat.lightness})을 입으면 두 어두운 색이 뭉개져 ${label}의 라인이 죽습니다. 안쪽은 밝은 그레이나 베이지가 맞습니다.`;
         } else {
-          if (sweat.code.includes('09')) {
-            colorScore -= 5;
-            classicTrendLesson = `<b>[네이비+블랙 명도 겹침 (-5점)]</b> 네이비 블레이저 안에 쌩 블랙 스웨트를 넣으면 두 어두운 색이 뭉개져 테일러드 라인이 죽습니다. 블레이저 안에는 03 그레이나 31 베이지 스웨트가 맞습니다.`;
-          } else {
-            const bright = sweat.lightness >= 70;
-            silhouetteScore += bright ? 8 : 5;
-            tags.push('#2026네오프레피');
-            classicTrendLesson = `<b>[2026 하이-로우 믹스: 네오 프레피 (+${bright ? 8 : 5}점)]</b> 구조적인 테일러드 블레이저 안에 부드러운 스웨트를 넣는 스타일링입니다. ${bright ? '밝은 스웨트가 네이비와 명확히 대비되어 블레이저 라인이 또렷합니다.' : '스웨트가 어두워 블레이저와의 대비가 약해 효과가 절반 수준입니다.'}`;
-          }
-          // 블레이저와 하의의 격 맞춤
-          if (bottom.code.includes('65')) {
-            silhouetteScore -= 1;
-            classicTrendLesson += `<br><br>👖 <b>블레이저 + 데님 (-1점):</b> 스마트 캐주얼로는 좋지만 격식의 결을 맞춘 치노보다 한 단계 캐주얼합니다.`;
-          } else {
-            silhouetteScore += 2;
-            classicTrendLesson += `<br><br>👖 <b>블레이저 + 치노 (+2점):</b> 격식의 결이 맞는 클래식 하의 선택입니다.`;
-          }
+          const bright = sweat.lightness >= 70;
+          const pts = isBlazer ? (bright ? 8 : 5) : (bright ? 7 : 4);
+          silhouetteScore += pts;
+          tags.push(isBlazer ? '#2026네오프레피' : '#2026레이어드코트');
+          classicTrendLesson = `<b>[2026 하이-로우 믹스: ${isBlazer ? '네오 프레피' : '코트 레이어링'} (+${pts}점)]</b> 구조적인 ${label} 안에 부드러운 스웨트를 넣는 스타일링입니다. ${bright ? '밝은 스웨트가 아우터와 명확히 대비되어 라인이 또렷합니다.' : '스웨트가 어두워 아우터와의 대비가 약해 효과가 절반 수준입니다.'}`;
         }
-      } else if (outer.id === 'outer_31') {
-        // 31 베이지 퍼프텍 쇼트 블루종
-        if (mainTop.code.includes('31')) {
+        // 구조적 아우터는 하의의 격을 맞출수록 좋다
+        if (isDenim(bottom)) {
+          silhouetteScore -= 1;
+          classicTrendLesson += `<br><br>👖 <b>${label} + 데님 (-1점):</b> 스마트 캐주얼로는 좋지만 격식의 결을 맞춘 치노보다 한 단계 캐주얼합니다.`;
+        } else {
+          silhouetteScore += 2;
+          classicTrendLesson += `<br><br>👖 <b>${label} + 치노 (+2점):</b> 격식의 결이 맞는 클래식 하의 선택입니다.`;
+        }
+      } else if (style === 'blouson') {
+        if (sameBlock) {
           colorScore -= 8;
-          classicTrendLesson = `<b>[아우터-상의 동일 색상 (-8점)]</b> 베이지 블루종 안에 같은 베이지 상의를 입으면 밝은 색이 상체 전체로 번져 부해 보입니다. 안쪽은 차콜(08)·다크브라운(39)·틸블루(66)·네이비(69)로 눌러주세요.`;
+          classicTrendLesson = `<b>[아우터-상의 같은 색 덩어리 (-8점)]</b> ${outer.name} 안에 비슷한 명도의 ${mainTop.name}을 입으면 색이 상체 전체로 번져 부해 보입니다. 이너는 차콜·다크브라운·네이비처럼 한 단계 어둡게 눌러주세요.`;
+        } else if (darkMerge) {
+          colorScore -= 5;
+          classicTrendLesson = `<b>[어두운 아우터 + 어두운 이너 (-5점)]</b> 둘 다 어두워 아우터의 입체감이 사라집니다.`;
         } else if (mainTop.lightness <= 40) {
           silhouetteScore += 7;
           tags.push('#숏블루종실루엣');
-          classicTrendLesson = `<b>[크롭 아우터 + 딥 톤 이너 (+7점)]</b> 짧은 베이지 블루종이 허리선을 높이고, 어두운 이너가 상체를 잡아주며 ${bottom.name}가 일자로 떨어져 비율이 길어 보입니다. 2026 F/W의 유틸리티·블루종 흐름에 맞습니다.`;
+          classicTrendLesson = `<b>[크롭 아우터 + 딥 톤 이너 (+7점)]</b> 짧은 ${outer.name}이 허리선을 높이고, 어두운 이너가 상체를 잡아주며 ${bottom.name}가 일자로 떨어져 비율이 길어 보입니다. 2026 F/W의 유틸리티·블루종 흐름에 맞습니다.`;
         } else {
           silhouetteScore += 3;
           tags.push('#숏블루종실루엣');
           classicTrendLesson = `<b>[크롭 아우터 (+3점)]</b> 비율 자체는 좋지만 이너도 밝아서 아우터와 이너의 대비가 약합니다. 이너를 한 톤 어둡게 가면 더 좋아집니다.`;
+        }
+      } else if (style === 'jacket') {
+        if (sameBlock || darkMerge) {
+          colorScore -= 6;
+          classicTrendLesson = `<b>[아우터-이너 색 겹침 (-6점)]</b> ${outer.name}과 ${mainTop.name}의 명도가 비슷해 아우터의 윤곽이 묻힙니다. 이너와 명도 차이를 25포인트 이상 두세요.`;
+        } else if (outerGap >= 30) {
+          silhouetteScore += 5;
+          tags.push('#아우터대비');
+          classicTrendLesson = `<b>[아우터-이너 명도 대비 (+5점)]</b> ${outer.name}과 ${mainTop.name}의 명도 차이가 ${outerGap}포인트로 선명해, 아우터의 실루엣이 또렷하게 살아납니다.`;
+        } else {
+          silhouetteScore += 2;
+          classicTrendLesson = `<b>[무난한 아우터 레이어링 (+2점)]</b> 충돌은 없지만 아우터와 이너의 대비가 약해 인상이 평범합니다.`;
         }
       } else {
         // 아우터 안 입음
@@ -470,15 +592,15 @@
       // 4. 실전 착용 디테일 처방전
       // =========================================================
       if (mode === 'shirt_only') {
-        if (outer.id === 'outer_69') {
-          stylingTip = `📌 <b>착용 디테일:</b> 블레이저를 입을 때는 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하고, 갈색이나 블랙 가죽 벨트를 채워주면 완벽합니다.`;
+        if (style === 'blazer' || style === 'coat') {
+          stylingTip = `📌 <b>착용 디테일:</b> 구조적인 아우터를 입을 때는 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하고, 갈색이나 블랙 가죽 벨트를 채워주면 완벽합니다.`;
         } else {
           stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
         }
       } else if (mode === 'layered') {
         stylingTip = `📌 <b>착용 디테일:</b> 옥스포드 셔츠의 카라 끝 단추(버튼다운)를 반드시 잠가야 스웨트 목선 안에서 깃이 무너지지 않고 아치형(Roll)을 유지합니다. 소매 끝으로 셔츠 커프스를 1cm 빼주세요.`;
       } else {
-        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 하의가 72~73cm 정석 기장이므로, 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
+        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
       }
 
       // 점수 보정
@@ -502,16 +624,76 @@
         colorLesson, layerLesson, classicTrendLesson, stylingTip
       };
     }
+    // ==== PURE LOGIC END ====
+
+    // ==== UI ====
+    // 시트 CSV 주소를 여기에 적어두면 모든 기기에서 같은 시트를 읽습니다. (비워두면 이 브라우저에 저장된 주소를 사용)
+    const SHEET_CSV_URL = '';
+    const DEFAULT_BADGE = '클래식 공식 + 2026 F/W 트렌드 룰 엔진';
+
+    let wardrobe = buildWardrobe(DEFAULT_ITEMS);
+    let items = wardrobe.items;
+    let state = {
+      outer: 'outer_69',
+      sweat: 'sweat_03',
+      shirt: 'shirt_64',
+      bottom: 'bottom_56'
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      let savedCsvUrl = '';
+      try { savedCsvUrl = localStorage.getItem('wardrobe_csv_url') || ''; } catch (e) {}
+      const url = savedCsvUrl || SHEET_CSV_URL;
+      if (url) {
+        document.getElementById('csvUrlInput').value = url;
+        await fetchSheetData(url);
+      }
+      normalizeState();
+      renderAll();
+    });
+
+    function getItem(id) {
+      return items.find(i => i.id === id);
+    }
+
+    function firstReal(category) {
+      return items.find(i => i.category === category && !i.none);
+    }
+
+    // 시트에서 옷이 삭제/변경되어도 선택 상태가 깨지지 않게 보정
+    function normalizeState() {
+      CATEGORIES.forEach(c => {
+        if (!getItem(state[c])) state[c] = (firstReal(c) || items.find(i => i.category === c)).id;
+      });
+      if (getItem(state.sweat).none && getItem(state.shirt).none) state.shirt = firstReal('shirt').id;
+    }
+
+    function selectItem(category, id) {
+      // 상의 둘 다 '안 입음' 선택 시 자동 전환 안전장치
+      if (category === 'sweat' && getItem(id).none && getItem(state.shirt).none) {
+        state.shirt = firstReal('shirt').id;
+      } else if (category === 'shirt' && getItem(id).none && getItem(state.sweat).none) {
+        state.sweat = firstReal('sweat').id;
+      }
+      state[category] = id;
+      renderAll();
+    }
+
+    // 칩/팔레트 색상 표시 (패턴 옷은 hex를 어둡게 한 줄무늬로 표현)
+    function swatchBackground(item) {
+      if (item.none) return 'repeating-linear-gradient(45deg,#f8fafc,#f8fafc 5px,#e2e8f0 5px,#e2e8f0 10px)';
+      if (item.patterned) {
+        const n = parseInt(item.hex.slice(1), 16);
+        const dark = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * 0.62).toString(16).padStart(2, '0')).join('');
+        return `repeating-linear-gradient(90deg,#ffffff,#ffffff 4px,#${dark} 4px,#${dark} 6px)`;
+      }
+      return item.hex;
+    }
 
     function createChipHtml(item, isSelected, onClickStr) {
-      let swatchClass = '';
-      if (item.pattern === 'stripe-gray') swatchClass = 'stripe-gray';
-      else if (item.pattern === 'stripe-blue') swatchClass = 'stripe-blue';
-      else if (item.pattern === 'none') swatchClass = 'none-pattern';
-
       return `
         <button onclick="${onClickStr}" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-white text-left transition ${isSelected ? 'chip-active' : 'hover:bg-slate-50'}">
-          <span class="w-6 h-6 rounded-full border border-black/15 flex-shrink-0 shadow-inner ${swatchClass}" style="${swatchClass ? '' : `background-color: ${item.hex}`}"></span>
+          <span class="w-6 h-6 rounded-full border border-black/15 flex-shrink-0 shadow-inner" style="background:${swatchBackground(item)}"></span>
           <div class="min-w-0 flex-1">
             <div class="text-[11px] font-extrabold truncate">${item.code}</div>
             <div class="text-[11px] text-slate-500 sub-text truncate">${item.name}</div>
@@ -548,20 +730,19 @@
       const curBottom = getItem(state.bottom) || bottoms[0];
 
       document.getElementById('selectedOuterLabel').textContent = curOuter.name;
-      document.getElementById('selectedSweatLabel').textContent = curSweat.id === 'sweat_none' ? '착용 안 함' : `${curSweat.code} (${curSweat.name})`;
-      document.getElementById('selectedShirtLabel').textContent = curShirt.id === 'shirt_none' ? '착용 안 함' : `${curShirt.code} (${curShirt.name})`;
+      document.getElementById('selectedSweatLabel').textContent = curSweat.none ? '착용 안 함' : `${curSweat.code} (${curSweat.name})`;
+      document.getElementById('selectedShirtLabel').textContent = curShirt.none ? '착용 안 함' : `${curShirt.code} (${curShirt.name})`;
       document.getElementById('selectedBottomLabel').textContent = `${curBottom.code} (${curBottom.name})`;
 
       // 실제 착용 중인 아이템만 팔레트칩에 표시
       const activeItems = [];
-      if (curOuter.id !== 'outer_none') activeItems.push(curOuter);
-      if (curSweat.id !== 'sweat_none') activeItems.push(curSweat);
-      if (curShirt.id !== 'shirt_none') activeItems.push(curShirt);
+      if (!curOuter.none) activeItems.push(curOuter);
+      if (!curSweat.none) activeItems.push(curSweat);
+      if (!curShirt.none) activeItems.push(curShirt);
       activeItems.push(curBottom);
 
       document.getElementById('palettePreview').innerHTML = activeItems.map(i => {
-        const pClass = i.pattern === 'stripe-gray' ? 'stripe-gray' : (i.pattern === 'stripe-blue' ? 'stripe-blue' : '');
-        return `<div class="w-7 h-7 rounded-full border-2 border-slate-900 shadow ${pClass}" style="${pClass ? '' : `background-color:${i.hex}`}"></div>`;
+        return `<div class="w-7 h-7 rounded-full border-2 border-slate-900 shadow" style="background:${swatchBackground(i)}"></div>`;
       }).join('');
 
       document.getElementById('comboSummaryText').textContent = activeItems.map(i => i.name).join(' + ');
@@ -603,9 +784,20 @@
           <p>${res.stylingTip}</p>
         </div>
       `;
+      renderDataCheck();
     }
 
-    // S급(93점 이상) 랜덤 추천 (단품/레이어드 골고루 학습)
+    // 데이터 점검 리포트 (시트 입력 실수를 바로 알려줌)
+    function renderDataCheck() {
+      const real = items.filter(i => !i.none);
+      const counts = CATEGORIES.map(c => `${{ outer: '아우터', sweat: '스웨트', shirt: '셔츠', bottom: '하의' }[c]} ${real.filter(i => i.category === c).length}`).join(' · ');
+      const w = wardrobe.warnings;
+      document.getElementById('dataCheck').innerHTML =
+        `<div class="font-bold text-slate-700 mb-1">📋 데이터 점검 — ${counts}</div>` +
+        (w.length ? w.map(m => `<div class="text-slate-600">${m}</div>`).join('') : `<div class="text-emerald-700">✅ 문제 없음. 모든 옷의 명도·톤이 hex에서 자동 계산되었습니다.</div>`);
+    }
+
+    // S급 이상 랜덤 추천 (단품/레이어드 골고루 학습)
     function recommendBestRandom() {
       const outers = items.filter(i => i.category === 'outer');
       const sweats = items.filter(i => i.category === 'sweat');
@@ -616,10 +808,10 @@
       outers.forEach(o => {
         sweats.forEach(sw => {
           shirts.forEach(sh => {
-            if (sw.id === 'sweat_none' && sh.id === 'shirt_none') return;
+            if (sw.none && sh.none) return;
             bottoms.forEach(b => {
               const res = evaluateOutfit(o, sw, sh, b);
-              if (res.total >= 93) {
+              if (res.total >= SCORE_RULES.grade[1][0]) {
                 highCombos.push({ outer: o.id, sweat: sw.id, shirt: sh.id, bottom: b.id });
               }
             });
@@ -643,61 +835,48 @@
     async function fetchSheetData(url) {
       try {
         const res = await fetch(url);
-        const csvText = await res.text();
-        const rows = csvText.split(/\r?\n/).map(r => r.split(','));
-        if (rows.length < 2) return;
-
-        const parsed = rows.slice(1).filter(r => r.length >= 7 && r[0].trim() !== '').map(r => ({
-          id: r[0].trim(),
-          category: r[1].trim(),
-          code: r[2].trim(),
-          name: r[3].trim(),
-          desc: r[4].trim(),
-          hex: r[5].trim(),
-          tone: r[6].trim(),
-          lightness: Number(r[7] || 50),
-          temp: (r[8] || 'neutral').trim(),
-          pattern: (r[9] || 'solid').trim()
-        }));
-
-        if (parsed.length > 0) {
-          // 시트에 none 옵션이 누락되어 있어도 자동으로 보장
-          const hasSweatNone = parsed.some(i => i.id === 'sweat_none');
-          const hasShirtNone = parsed.some(i => i.id === 'shirt_none');
-          if (!hasSweatNone) parsed.unshift(DEFAULT_ITEMS.find(i => i.id === 'sweat_none'));
-          if (!hasShirtNone) parsed.unshift(DEFAULT_ITEMS.find(i => i.id === 'shirt_none'));
-          items = parsed;
-          document.getElementById('dataSourceBadge').textContent = `구글 시트 실시간 연동됨`;
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const w = buildWardrobe(csvToRawItems(await res.text()));
+        const ok = CATEGORIES.every(c => w.items.some(i => i.category === c && !i.none));
+        if (!ok) { wardrobe = buildWardrobe(DEFAULT_ITEMS); items = wardrobe.items; wardrobe.warnings = w.warnings.concat('❌ 시트에 4개 카테고리가 모두 있어야 해서 기본 데이터로 작동합니다.'); document.getElementById('dataSourceBadge').textContent = '시트 오류 — 기본 데이터로 작동 중'; return; }
+        wardrobe = w;
+        items = w.items;
+        document.getElementById('dataSourceBadge').textContent = `구글 시트 연동됨 · 옷 ${w.items.filter(i => !i.none).length}벌` + (w.warnings.some(m => !m.startsWith('ℹ️')) ? ` · 확인 필요 ${w.warnings.filter(m => !m.startsWith('ℹ️')).length}건` : '');
       } catch (e) {
-        alert('구글 시트 CSV를 불러오지 못해 기본 데이터로 작동합니다.');
+        wardrobe = buildWardrobe(DEFAULT_ITEMS);
+        items = wardrobe.items;
+        wardrobe.warnings.unshift(`❌ 시트를 불러오지 못해 기본 데이터로 작동합니다 (${e.message}).`);
+        document.getElementById('dataSourceBadge').textContent = '시트 불러오기 실패 — 기본 데이터로 작동 중';
       }
     }
 
     async function saveAndLoadCsv() {
       const url = document.getElementById('csvUrlInput').value.trim();
       if (!url) return alert('CSV URL을 입력해주세요.');
-      localStorage.setItem('wardrobe_csv_url', url);
+      try { localStorage.setItem('wardrobe_csv_url', url); } catch (e) {}
       await fetchSheetData(url);
+      normalizeState();
       renderAll();
       toggleModal('sheetModal');
     }
 
     function resetToDefaultData() {
-      localStorage.removeItem('wardrobe_csv_url');
+      try { localStorage.removeItem('wardrobe_csv_url'); } catch (e) {}
       document.getElementById('csvUrlInput').value = '';
-      items = [...DEFAULT_ITEMS];
-      document.getElementById('dataSourceBadge').textContent = '클래식 공식 + 2026 F/W 트렌드 룰 엔진';
+      wardrobe = buildWardrobe(DEFAULT_ITEMS);
+      items = wardrobe.items;
+      document.getElementById('dataSourceBadge').textContent = DEFAULT_BADGE;
+      normalizeState();
       renderAll();
       toggleModal('sheetModal');
     }
 
     function downloadTemplateCsv() {
-      const header = 'id,category,code,name,desc,hex,tone,lightness,temp,pattern\n';
-      const body = DEFAULT_ITEMS.map(i =>
-        `${i.id},${i.category},${i.code},${i.name},${i.desc},${i.hex},${i.tone},${i.lightness},${i.temp},${i.pattern}`
-      ).join('\n');
-      const blob = new Blob(["\uFEFF" + header + body], { type: 'text/csv;charset=utf-8;' });
+      // 필수: id,category,code,name,hex / 나머지는 비워도 됨 (명도·톤·온도는 hex에서 자동 계산)
+      const cols = ['id', 'category', 'code', 'name', 'desc', 'hex', 'pattern', 'style', 'tone', 'temp'];
+      const esc = v => /[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v;
+      const body = DEFAULT_ITEMS.map(i => cols.map(c => esc(i[c] || '')).join(',')).join('\n');
+      const blob = new Blob(["\uFEFF" + cols.join(',') + '\n' + body], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = 'uniqlo_wardrobe_academy.csv';
