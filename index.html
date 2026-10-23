@@ -32,16 +32,16 @@
 
   <!-- 상단 고정 헤더 & 종합 대시보드 -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 pt-3 pb-3 shadow-sm">
-    <div class="flex items-center justify-between mb-2">
-      <div>
-        <h1 class="text-base font-black tracking-tight text-slate-900">WARDROBE ACADEMY</h1>
-        <p class="text-[11px] text-slate-500" id="dataSourceBadge">클래식 공식 + 2026 F/W 트렌드 룰 엔진</p>
+    <div class="flex items-center justify-between gap-2 mb-2">
+      <div class="min-w-0">
+        <h1 class="text-base font-black tracking-tight text-slate-900 truncate">WARDROBE ACADEMY</h1>
+        <p class="text-[11px] text-slate-500 truncate" id="dataSourceBadge">클래식 공식 + 2026 F/W 트렌드 룰 엔진</p>
       </div>
-      <div class="flex gap-1.5">
-        <button onclick="recommendBestRandom()" class="px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
+      <div class="flex gap-1.5 flex-shrink-0">
+        <button onclick="recommendBestRandom()" class="whitespace-nowrap px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
           <span>🎲 황금조합 학습</span>
         </button>
-        <button onclick="toggleModal('sheetModal')" class="p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
+        <button onclick="toggleModal('sheetModal')" class="whitespace-nowrap p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
           ⚙️ 시트
         </button>
       </div>
