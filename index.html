@@ -5,168 +5,161 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#111827" />
-  <title>UNIQLO 캡슐 워드로브 코디네이터</title>
+  <meta name="theme-color" content="#0f172a" />
+  <title>UNIQLO 캡슐 워드로브 아카데미</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     body {
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f3f4f6;
-      color: #111827;
+      background-color: #f1f5f9;
+      color: #0f172a;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
     .stripe-gray {
-      background: repeating-linear-gradient(90deg, #ffffff, #ffffff 4px, #9ca3af 4px, #9ca3af 6px);
+      background: repeating-linear-gradient(90deg, #ffffff, #ffffff 4px, #94a3b8 4px, #94a3b8 6px);
     }
     .stripe-blue {
       background: repeating-linear-gradient(90deg, #ffffff, #ffffff 4px, #3b82f6 4px, #3b82f6 6px);
     }
+    .none-pattern {
+      background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 5px, #e2e8f0 5px, #e2e8f0 10px);
+    }
     .chip-active {
-      ring-width: 2px;
-      border-color: #111827 !important;
-      background-color: #111827 !important;
+      border-color: #0f172a !important;
+      background-color: #0f172a !important;
       color: #ffffff !important;
-      box-shadow: 0 4px 12px rgba(17, 24, 39, 0.18);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22);
     }
     .chip-active .sub-text {
-      color: #d1d5db !important;
+      color: #cbd5e1 !important;
     }
   </style>
 </head>
-<body class="pb-16 max-w-md mx-auto min-h-screen bg-gray-50 shadow-xl relative">
+<body class="pb-20 max-w-md mx-auto min-h-screen bg-slate-50 shadow-2xl relative">
 
-  <!-- 상단 고정 헤더 & 프리뷰 바 -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-200 px-4 pt-3 pb-3 shadow-sm">
+  <!-- 상단 고정 헤더 & 종합 대시보드 -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 pt-3 pb-3 shadow-sm">
     <div class="flex items-center justify-between mb-2">
       <div>
-        <h1 class="text-base font-extrabold tracking-tight text-gray-900">WARDROBE LAB</h1>
-        <p class="text-[11px] text-gray-500" id="dataSourceBadge">기본 내장 데이터 (20벌)</p>
+        <h1 class="text-base font-black tracking-tight text-slate-900">WARDROBE ACADEMY</h1>
+        <p class="text-[11px] text-slate-500" id="dataSourceBadge">클래식 공식 & 2026 트렌드 학습 엔진</p>
       </div>
       <div class="flex gap-1.5">
-        <button onclick="recommendBestRandom()" class="px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1">
-          <span>🎲 S급 추천</span>
+        <button onclick="recommendBestRandom()" class="px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
+          <span>🎲 황금조합 학습</span>
         </button>
-        <button onclick="toggleModal('sheetModal')" class="p-1.5 bg-gray-100 active:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium border border-gray-200" title="구글 시트 연동">
-          ⚙️ 시트연동
+        <button onclick="toggleModal('sheetModal')" class="p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
+          ⚙️ 시트
         </button>
       </div>
     </div>
 
     <!-- 실시간 점수 & 컬러 팔레트 프리뷰 -->
-    <div class="bg-gray-900 text-white rounded-xl p-3 flex items-center justify-between shadow-inner">
-      <div class="flex items-center gap-3">
-        <!-- 컬러칩 스택 -->
-        <div id="palettePreview" class="flex -space-x-2"></div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span id="gradeBadge" class="px-1.5 py-0.5 text-[11px] font-black rounded bg-amber-400 text-gray-900">S+</span>
-            <span id="moodTitle" class="text-xs font-bold text-gray-100">클래식 프레피 정석</span>
+    <div class="bg-slate-900 text-white rounded-2xl p-3.5 flex items-center justify-between shadow-inner">
+      <div class="flex items-center gap-3 min-w-0">
+        <div id="palettePreview" class="flex -space-x-2 flex-shrink-0"></div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span id="gradeBadge" class="px-1.5 py-0.5 text-[11px] font-black rounded bg-amber-400 text-slate-900">S+</span>
+            <span id="wearingTypeBadge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-700 text-slate-200">레이어드</span>
+            <span id="moodTitle" class="text-xs font-extrabold text-white truncate">아이비리그 네오 프레피</span>
           </div>
-          <p id="comboSummaryText" class="text-[11px] text-gray-400 mt-0.5 truncate max-w-[175px]">조합을 선택해주세요</p>
+          <p id="comboSummaryText" class="text-[11px] text-slate-400 mt-1 truncate"></p>
         </div>
       </div>
-      <div class="text-right">
-        <div class="text-[10px] text-gray-400 uppercase tracking-wider">TOTAL</div>
-        <div class="text-2xl font-black leading-none text-amber-400"><span id="totalScore">96</span><span class="text-xs font-normal text-gray-400">점</span></div>
+      <div class="text-right flex-shrink-0 pl-2">
+        <div class="text-[10px] text-slate-400 font-bold tracking-wider">SCORE</div>
+        <div class="text-2xl font-black leading-none text-amber-400"><span id="totalScore">96</span><span class="text-xs font-normal text-slate-400">점</span></div>
       </div>
     </div>
   </header>
 
   <!-- 메인 슬롯 선택 영역 -->
-  <main class="px-4 pt-4 space-y-5">
+  <main class="px-4 pt-4 space-y-4">
 
     <!-- 1. 아우터 선택 -->
-    <section class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
-      <div class="flex justify-between items-center mb-2.5">
-        <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-500">1. OUTER (아우터)</h2>
-        <span id="selectedOuterLabel" class="text-xs font-semibold text-gray-800">선택됨</span>
+    <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. OUTER (아우터)</h2>
+        <span id="selectedOuterLabel" class="text-xs font-bold text-slate-800"></span>
       </div>
       <div id="outerContainer" class="grid grid-cols-3 gap-2"></div>
     </section>
 
-    <!-- 2. 상의 모드 & 선택 -->
-    <section class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
-      <div class="flex justify-between items-center mb-2.5">
-        <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-500">2. TOP (상의 구성 방식)</h2>
+    <!-- 2-A. 오버사이즈 스웨트셔츠 선택 (안 입음 포함) -->
+    <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex justify-between items-center mb-1">
+        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">2-A. SWEATSHIRT (스웨트셔츠)</h2>
+        <span id="selectedSweatLabel" class="text-xs font-bold text-indigo-600"></span>
       </div>
+      <p class="text-[11px] text-slate-400 mb-2.5">셔츠만 단독으로 입으려면 <b>[❌ 안 입음]</b>을 선택하세요.</p>
+      <div id="sweatContainer" class="grid grid-cols-2 gap-2"></div>
+    </section>
 
-      <!-- 상의 3가지 모드 탭 -->
-      <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-xl mb-3">
-        <button onclick="setTopMode('layered')" id="modeBtn-layered" class="py-1.5 text-xs font-bold rounded-lg transition">스웨트+셔츠</button>
-        <button onclick="setTopMode('sweat')" id="modeBtn-sweat" class="py-1.5 text-xs font-bold rounded-lg transition">스웨트 단독</button>
-        <button onclick="setTopMode('shirt')" id="modeBtn-shirt" class="py-1.5 text-xs font-bold rounded-lg transition">셔츠 단독</button>
+    <!-- 2-B. 옥스포드 셔츠 선택 (안 입음 포함) -->
+    <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex justify-between items-center mb-1">
+        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">2-B. OXFORD SHIRT (옥스포드 셔츠)</h2>
+        <span id="selectedShirtLabel" class="text-xs font-bold text-indigo-600"></span>
       </div>
-
-      <!-- 스웨트셔츠 선택 영역 -->
-      <div id="sweatSection" class="mb-3">
-        <div class="flex justify-between items-center mb-1.5">
-          <span class="text-xs font-bold text-gray-700">오버사이즈 스웨트셔츠 (L)</span>
-          <span id="selectedSweatLabel" class="text-[11px] text-gray-500"></span>
-        </div>
-        <div id="sweatContainer" class="grid grid-cols-2 gap-2"></div>
-      </div>
-
-      <!-- 옥스포드 셔츠 선택 영역 -->
-      <div id="shirtSection">
-        <div class="flex justify-between items-center mb-1.5">
-          <span class="text-xs font-bold text-gray-700">옥스포드 셔츠 (단색 5 / 스트라이프 2)</span>
-          <span id="selectedShirtLabel" class="text-[11px] text-gray-500"></span>
-        </div>
-        <div id="shirtContainer" class="grid grid-cols-2 gap-2"></div>
-      </div>
+      <p class="text-[11px] text-slate-400 mb-2.5">스웨트만 단독으로 입으려면 <b>[❌ 안 입음]</b>, 겹쳐 입으려면 색상을 고르세요.</p>
+      <div id="shirtContainer" class="grid grid-cols-2 gap-2"></div>
     </section>
 
     <!-- 3. 하의 선택 -->
-    <section class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
-      <div class="flex justify-between items-center mb-2.5">
-        <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-500">3. BOTTOM (치노 4 / 데님 1)</h2>
-        <span id="selectedBottomLabel" class="text-xs font-semibold text-gray-800"></span>
+    <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">3. BOTTOM (하의 5종)</h2>
+        <span id="selectedBottomLabel" class="text-xs font-bold text-slate-800"></span>
       </div>
       <div id="bottomContainer" class="grid grid-cols-2 gap-2"></div>
     </section>
 
-    <!-- 4. 정량 평가 상세 리포트 카드 -->
-    <section class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-      <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
-        <h2 class="text-sm font-extrabold text-gray-900">📊 정량 스타일링 리포트</h2>
-        <div id="toneTags" class="flex gap-1"></div>
+    <!-- 4. 학습형 심층 스타일링 리포트 -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="text-sm font-black text-slate-900">🎓 왜 이 점수일까? (복식 원리 해설)</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">선택한 조합의 색채학·소재·트렌드 분석입니다.</p>
+        </div>
+        <div id="toneTags" class="flex flex-wrap gap-1 justify-end max-w-[140px]"></div>
       </div>
 
-      <!-- 세부 점수 프로그레스 바 -->
-      <div class="space-y-2 text-xs">
+      <!-- 3대 정량 지표 바 -->
+      <div class="space-y-2.5 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
         <div>
           <div class="flex justify-between mb-1">
-            <span class="font-semibold text-gray-600">컬러 밸런스 & 명도 대비 (40점)</span>
-            <span id="scoreColor" class="font-bold text-gray-900">38 / 40</span>
+            <span class="font-bold text-slate-700">① 색채 조화 & 명도 분리 (40점)</span>
+            <span id="scoreColor" class="font-black text-indigo-600">38 / 40</span>
           </div>
-          <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-            <div id="barColor" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 95%"></div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div id="barColor" class="bg-indigo-600 h-full rounded-full transition-all duration-300"></div>
           </div>
         </div>
         <div>
           <div class="flex justify-between mb-1">
-            <span class="font-semibold text-gray-600">레이어드 & 브이존 시너지 (30점)</span>
-            <span id="scoreLayer" class="font-bold text-gray-900">28 / 30</span>
+            <span class="font-bold text-slate-700">② 상의 구성 & 소재 레이어링 (30점)</span>
+            <span id="scoreLayer" class="font-black text-emerald-600">28 / 30</span>
           </div>
-          <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-            <div id="barLayer" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 93%"></div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div id="barLayer" class="bg-emerald-500 h-full rounded-full transition-all duration-300"></div>
           </div>
         </div>
         <div>
           <div class="flex justify-between mb-1">
-            <span class="font-semibold text-gray-600">실루엣 & TPO 완성도 (30점)</span>
-            <span id="scoreSilhouette" class="font-bold text-gray-900">30 / 30</span>
+            <span class="font-bold text-slate-700">③ 클래식 공식 & 2026 실루엣 (30점)</span>
+            <span id="scoreSilhouette" class="font-black text-amber-600">30 / 30</span>
           </div>
-          <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-            <div id="barSilhouette" class="bg-amber-500 h-full rounded-full transition-all duration-300" style="width: 100%"></div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div id="barSilhouette" class="bg-amber-500 h-full rounded-full transition-all duration-300"></div>
           </div>
         </div>
       </div>
 
-      <!-- 코멘트 리스트 -->
-      <div id="analysisList" class="bg-gray-50 rounded-xl p-3 space-y-2 text-xs text-gray-700 leading-relaxed border border-gray-100"></div>
+      <!-- 4단계 심층 학습 카드 -->
+      <div id="learningCards" class="space-y-3 text-xs leading-relaxed"></div>
     </section>
 
   </main>
@@ -175,47 +168,48 @@
   <div id="sheetModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center">
-        <h3 class="text-base font-extrabold text-gray-900">구글 스프레드시트 연동</h3>
-        <button onclick="toggleModal('sheetModal')" class="text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
+        <h3 class="text-base font-extrabold text-slate-900">구글 스프레드시트 연동</h3>
+        <button onclick="toggleModal('sheetModal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
       </div>
-      <p class="text-xs text-gray-600 leading-relaxed">
-        구글 시트에서 <b>[파일] → [공유] → [웹에 게시] → [쉼표로 구분된 값(.csv)]</b> 선택 후 생성된 URL을 아래에 붙여넣으세요.
+      <p class="text-xs text-slate-600 leading-relaxed">
+        구글 시트 <b>[파일] → [공유] → [웹에 게시] → [쉼표로 구분된 값(.csv)]</b> 링크를 붙여넣으세요.
       </p>
-      <input id="csvUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      <input id="csvUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
       <div class="flex gap-2">
         <button onclick="saveAndLoadCsv()" class="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">연동 및 불러오기</button>
-        <button onclick="resetToDefaultData()" class="py-2 px-3 bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg">기본값 초기화</button>
+        <button onclick="resetToDefaultData()" class="py-2 px-3 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg">초기화</button>
       </div>
-      <div class="border-t border-gray-100 pt-3">
+      <div class="border-t border-slate-100 pt-3">
         <button onclick="downloadTemplateCsv()" class="w-full py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-lg">
-          📥 현재 20벌 구글 시트용 CSV 샘플 다운로드
+          📥 시트용 CSV 템플릿 다운로드
         </button>
       </div>
     </div>
   </div>
 
   <script>
-    // 1. 기본 내장 20벌 데이터 (구글 시트 미연동 시 즉시 작동)
     const DEFAULT_ITEMS = [
-      // 아우터 (없음 포함)
-      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 없음', desc: '실내 / 단품 레이어드', hex: '#f3f4f6', tone: 'neutral', lightness: 95, temp: 'neutral', pattern: 'solid' },
-      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', tone: 'earth', lightness: 84, temp: 'warm', pattern: 'solid' },
+      // 아우터
+      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 안 입음', desc: '실내 / 봄·가을 단품', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
+      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 중공섬유', hex: '#dfd5c6', tone: 'earth', lightness: 84, temp: 'warm', pattern: 'solid' },
       { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', tone: 'navy', lightness: 16, temp: 'cool', pattern: 'solid' },
 
-      // 오버사이즈 스웨트셔츠 (6벌)
-      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', tone: 'mono', lightness: 82, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', tone: 'mono', lightness: 26, temp: 'cool', pattern: 'solid' },
-      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', tone: 'mono', lightness: 10, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', tone: 'earth', lightness: 86, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', tone: 'earth', lightness: 18, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', tone: 'blue', lightness: 35, temp: 'cool', pattern: 'solid' },
+      // 오버사이즈 스웨트셔츠 (안 입음 포함)
+      { id: 'sweat_none', category: 'sweat', code: 'NONE', name: '❌ 스웨트 안 입음', desc: '옥스포드 셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
+      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '멜란지 라이트 그레이', desc: '가장 밝고 캐주얼한 회색', hex: '#d1d5db', tone: 'mono', lightness: 82, temp: 'neutral', pattern: 'solid' },
+      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색에 가까운 짙은 쥐색', hex: '#374151', tone: 'mono', lightness: 26, temp: 'cool', pattern: 'solid' },
+      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명하고 단단한 무채색', hex: '#111827', tone: 'mono', lightness: 10, temp: 'neutral', pattern: 'solid' },
+      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '라이트 크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', tone: 'earth', lightness: 86, temp: 'warm', pattern: 'solid' },
+      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 에스프레소 밤색', hex: '#3b2820', tone: 'earth', lightness: 18, temp: 'warm', pattern: 'solid' },
+      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 감도는 뮤트 블루', hex: '#3b5968', tone: 'blue', lightness: 35, temp: 'cool', pattern: 'solid' },
 
-      // 옥스포드 셔츠 (7벌)
-      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', tone: 'mono', lightness: 96, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', tone: 'mono', lightness: 64, temp: 'neutral', pattern: 'solid' },
-      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', tone: 'earth', lightness: 87, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', tone: 'blue', lightness: 78, temp: 'cool', pattern: 'solid' },
-      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 남색', hex: '#1e293b', tone: 'navy', lightness: 17, temp: 'cool', pattern: 'solid' },
+      // 옥스포드 셔츠 (안 입음 포함)
+      { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
+      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '자연스러운 크림 도화지', hex: '#f8f6f0', tone: 'mono', lightness: 96, temp: 'warm', pattern: 'solid' },
+      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 단색 중간 회색', hex: '#9ca3af', tone: 'mono', lightness: 64, temp: 'neutral', pattern: 'solid' },
+      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '솔리드 라이트 그린', desc: '파스텔 세이지 연둣빛', hex: '#dce5d5', tone: 'earth', lightness: 87, temp: 'warm', pattern: 'solid' },
+      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 파란색', hex: '#93c5fd', tone: 'blue', lightness: 78, temp: 'cool', pattern: 'solid' },
+      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 짙은 남색', hex: '#1e293b', tone: 'navy', lightness: 17, temp: 'cool', pattern: 'solid' },
       { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', tone: 'mono', lightness: 80, temp: 'neutral', pattern: 'stripe-gray' },
       { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#60a5fa', tone: 'blue', lightness: 75, temp: 'cool', pattern: 'stripe-blue' },
 
@@ -223,20 +217,18 @@
       { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', tone: 'earth', lightness: 32, temp: 'warm', pattern: 'solid' },
       { id: 'bottom_34', category: 'bottom', code: '34 BROWN', name: '브라운 치노', desc: '황토빛 중간 갈색 (72cm)', hex: '#855836', tone: 'earth', lightness: 40, temp: 'warm', pattern: 'solid' },
       { id: 'bottom_38', category: 'bottom', code: '38 DARK BROWN', name: '다크 브라운 치노', desc: '에스프레소 밤색 (72cm)', hex: '#382821', tone: 'earth', lightness: 19, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적인 차콜 쥐색 (72cm)', hex: '#374151', tone: 'mono', lightness: 25, temp: 'cool', pattern: 'solid' },
+      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적 차콜 쥐색 (72cm)', hex: '#374151', tone: 'mono', lightness: 25, temp: 'cool', pattern: 'solid' },
       { id: 'bottom_65', category: 'bottom', code: '65 MID BLUE', name: '레귤러핏 진 (데님)', desc: '정통 중청 데님 (73cm)', hex: '#3b5980', tone: 'blue', lightness: 38, temp: 'cool', pattern: 'solid' }
     ];
 
     let items = [...DEFAULT_ITEMS];
     let state = {
       outer: 'outer_69',
-      topMode: 'layered', // 'layered' | 'sweat' | 'shirt'
       sweat: 'sweat_03',
-      shirt: 'shirt_01',
+      shirt: 'shirt_64',
       bottom: 'bottom_56'
     };
 
-    // 2. 초기 렌더링 및 로컬스토리지 시트 확인
     window.addEventListener('DOMContentLoaded', async () => {
       const savedCsvUrl = localStorage.getItem('wardrobe_csv_url');
       if (savedCsvUrl) {
@@ -250,280 +242,304 @@
       return items.find(i => i.id === id);
     }
 
-    function setTopMode(mode) {
-      state.topMode = mode;
-      renderAll();
-    }
-
     function selectItem(category, id) {
+      // 상의 둘 다 '안 입음' 선택 시 자동 전환 안전장치
+      if (category === 'sweat' && id === 'sweat_none' && state.shirt === 'shirt_none') {
+        state.shirt = 'shirt_01';
+      } else if (category === 'shirt' && id === 'shirt_none' && state.sweat === 'sweat_none') {
+        state.sweat = 'sweat_03';
+      }
       state[category] = id;
       renderAll();
     }
 
-    // 3. 정량 채점 엔진 (100점 만점)
-    function evaluateOutfit(outer, topMode, sweat, shirt, bottom) {
+    // 상의 착용 형태 판별 ('layered' | 'sweat_only' | 'shirt_only')
+    function getWearingMode(sweat, shirt) {
+      if (sweat.id !== 'sweat_none' && shirt.id !== 'shirt_none') return 'layered';
+      if (sweat.id !== 'sweat_none' && shirt.id === 'shirt_none') return 'sweat_only';
+      return 'shirt_only';
+    }
+
+    // 핵심 학습형 채점 엔진
+    function evaluateOutfit(outer, sweat, shirt, bottom) {
+      const mode = getWearingMode(sweat, shirt);
+      const mainTop = mode === 'shirt_only' ? shirt : sweat;
+
       let colorScore = 30;      // 40점 만점
       let layerScore = 22;      // 30점 만점
       let silhouetteScore = 24; // 30점 만점
-      const comments = [];
+
       const tags = [];
+      let colorLesson = '';
+      let layerLesson = '';
+      let classicTrendLesson = '';
+      let stylingTip = '';
 
-      const mainTop = topMode === 'shirt' ? shirt : sweat;
-
-      // [A] 상·하의 명도 대비 및 색상 충돌 검사
+      // =========================================================
+      // 1. 색채학 & 명도 대비 원리 (Color Theory & Lightness)
+      // =========================================================
       const lightDiff = Math.abs(mainTop.lightness - bottom.lightness);
-      if (mainTop.code.split(' ')[0] === bottom.code.split(' ')[0]) {
+      const mainCodeNum = mainTop.code.split(' ')[0];
+      const bottomCodeNum = bottom.code.split(' ')[0];
+
+      if (mainCodeNum === bottomCodeNum || (mainTop.code.includes('39') && bottom.code.includes('38'))) {
         colorScore -= 12;
-        comments.push(`⚠️ <b>상·하의 색상 중복 주의:</b> 상의(${mainTop.name})와 하의(${bottom.name})의 색상/명도가 거의 같아 한 벌 작업복처럼 보일 수 있습니다.`);
-      } else if (lightDiff >= 35) {
+        tags.push('#톤겹침주의');
+        colorLesson = `<b>[동일 명도·색상 충돌 (점수 감점)]</b> 주 상의(${mainTop.name}, 명도 ${mainTop.lightness})와 하의(${bottom.name}, 명도 ${bottom.lightness})의 색상과 밝기가 거의 일치합니다. 상·하의 경계가 사라져 소위 '한 벌 작업복(점프수트)'처럼 답답해 보이는 현상이 발생합니다.`;
+      } else if (lightDiff >= 40) {
+        colorScore += 7;
+        tags.push('#고명도대비');
+        colorLesson = `<b>[명도 대비(Lightness Contrast)의 정석 (+7점)]</b> 상의(명도 ${mainTop.lightness})와 하의(명도 ${bottom.lightness})의 명도 차이가 <b>${lightDiff}포인트</b>로 매우 선명합니다. 시선이 자연스럽게 분리되어 상체는 화사하고 하체는 묵직하게 안정감을 주는 황금 비율입니다.`;
+      } else if (mainTop.tone === bottom.tone && lightDiff >= 18) {
         colorScore += 6;
-        tags.push('#명도대비선명');
-      } else if (lightDiff < 12 && mainTop.tone === bottom.tone) {
-        colorScore -= 5;
-        comments.push(`💡 상·하의 명도가 다소 가깝습니다. 이너 셔츠나 벨트/신발로 경계를 분리해주면 훨씬 정돈됩니다.`);
-      }
-
-      // [B] 황금 컬러 매칭 가산점 & 충돌 감점
-      // 1) 올리브 치노 (56 OLIVE) 궁합
-      if (bottom.code.includes('56')) {
-        if (['03 GRAY', '31 BEIGE', '09 BLACK', '01 OFF WHITE', '64 BLUE', '69 NAVY'].some(c => mainTop.code.includes(c))) {
-          colorScore += 4;
-          comments.push(`✅ <b>올리브 치노 정석 매칭:</b> ${bottom.name}의 중성적인 카키 톤이 상의(${mainTop.name})를 안정감 있게 받쳐줍니다.`);
-        }
-      }
-      // 2) 틸 블루 스웨트 (66 BLUE) 궁합
-      if (mainTop.code.includes('66')) {
-        if (bottom.code.includes('38') || bottom.code.includes('08') || bottom.code.includes('31')) {
-          colorScore += 4;
-          comments.push(`✨ <b>세련된 틸 블루 포인트:</b> 오묘한 청록빛 틸 블루를 차분한 ${bottom.name}로 눌러주어 고급스러운 무드가 납니다.`);
-        } else if (bottom.code.includes('65')) {
-          colorScore -= 4;
-          comments.push(`💡 틸 블루 상의와 중청 데님은 푸른 계열끼리 채도가 미묘하게 부딪힐 수 있으니 흰 셔츠 레이어드를 권장합니다.`);
-        }
-      }
-      // 3) 다크브라운 스웨트 (39) + 다크그레이(08) 또는 올리브(56)
-      if (mainTop.code.includes('39') && (bottom.code.includes('56') || bottom.code.includes('65'))) {
+        tags.push('#톤온톤정석');
+        colorLesson = `<b>[톤온톤(Tone-on-Tone) 배색 (+6점)]</b> 같은 계열(${mainTop.tone.toUpperCase()}) 안에서 밝기 차이를 <b>${lightDiff}포인트</b>로 벌려주었습니다. 색 수를 절제하면서도 깊이감을 내는 가장 세련된 클래식 색채 공식입니다.`;
+      } else if (mainTop.tone !== bottom.tone && lightDiff < 15) {
+        colorScore += 2;
+        tags.push('#톤인톤배색');
+        colorLesson = `<b>[톤인톤(Tone-in-Tone) 차분한 무드 (+2점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})의 색상은 다르지만 명도(밝기)가 비슷해 차분하게 가라앉는 분위기입니다. 이때는 셔츠 깃이나 밑단으로 밝은 흰색/하늘색 브릿지를 넣어주면 점수가 대폭 상승합니다.`;
+      } else {
         colorScore += 4;
-        tags.push('#딥어스톤');
+        colorLesson = `<b>[안정적인 중명도 밸런스 (+4점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})가 서로의 채도를 해치지 않고 자연스럽게 연결됩니다.`;
       }
 
-      // [C] 레이어드 시너지 평가 (30점 만점)
-      if (topMode === 'layered') {
+      // 황금 컬러 페어링 추가 가산점
+      if (bottom.code.includes('56') && ['03', '31', '09', '01', '64', '69'].some(c => mainTop.code.includes(c))) {
+        colorScore += 3;
+        colorLesson += `<br><br>💡 <b>올리브(56)의 중화 작용:</b> 밀리터리에서 유래한 올리브 치노는 채도가 빠져 있어 무채색·네이비·베이지 어디에나 어우러지는 '제2의 데님' 역할을 완벽히 수행합니다.`;
+      }
+      if (mainTop.code.includes('66') && (bottom.code.includes('38') || bottom.code.includes('08') || bottom.code.includes('34'))) {
+        colorScore += 4;
+        tags.push('#2026뮤트컬러');
+        colorLesson += `<br><br>✨ <b>2026 트렌드 [뮤트 틸 블루 + 다크 어스]:</b> 청록빛이 감도는 66 틸 블루는 웜톤 브라운/차콜 하의와 만났을 때 '차가운 상의 + 따뜻한 하의'의 온도 대비를 만들어내어 매우 고급스럽습니다.`;
+      }
+
+      // =========================================================
+      // 2. 상의 구성 & 소재 레이어링 역학 (Layering & Texture)
+      // =========================================================
+      if (mode === 'layered') {
         layerScore += 4;
-        // 어두운 스웨트 + 밝은 셔츠 도화지 효과
-        if (sweat.lightness <= 35 && shirt.lightness >= 75) {
-          layerScore += 4;
-          comments.push(`👔 <b>완벽한 브이존/밑단 분리:</b> 짙은 ${sweat.name} 스웨트 안쪽에 밝은 ${shirt.name}가 깃과 밑단으로 비치며 상·하의를 깔끔하게 분리합니다.`);
-          tags.push('#레이어드정석');
-        }
-        // 스트라이프 셔츠 포인트
-        if (shirt.pattern.includes('stripe')) {
-          if (sweat.pattern === 'solid') {
-            layerScore += 3;
-            comments.push(`🎯 <b>스트라이프 깃 포인트:</b> 단색 스웨트 목선 위로 ${shirt.name} 패턴이 살짝 드러나 단조로움을 깨줍니다.`);
-          }
-        }
-        // 베이지 스웨트 + 베이지/그린 셔츠 겹침 주의
-        if (sweat.code.includes('31') && shirt.code.includes('01')) {
-          layerScore -= 2;
-          comments.push(`💡 크림 베이지 스웨트와 오프 화이트 셔츠는 명도가 비슷해 레이어드 경계가 옅습니다. 삭스 블루나 스트라이프 셔츠를 추천합니다.`);
-        }
-        // 딥네이비 셔츠를 이너로 넣을 때
-        if (shirt.code.includes('69') && sweat.lightness <= 35) {
-          layerScore -= 5;
-          comments.push(`⚠️ 어두운 스웨트 안에 딥 네이비 셔츠를 넣으면 목선이 답답해 보일 수 있습니다. 밝은 셔츠가 더 돋보입니다.`);
-        }
-      } else if (topMode === 'shirt') {
-        layerScore += 3;
-        if (outer.id === 'outer_69') {
+        const innerDiff = shirt.lightness - sweat.lightness;
+
+        if (sweat.lightness <= 36 && shirt.lightness >= 75) {
           layerScore += 5;
-          comments.push(`🏛️ <b>아이비리그 프레피 정석:</b> JWA 감탄 블레이저에 옥스포드 셔츠 직결 매칭으로 가장 깔끔하고 단정한 실루엣입니다.`);
-          tags.push('#아이비리그프레피');
+          tags.push('#브릿지분리법');
+          layerLesson = `<b>[스웨트+셔츠 레이어드: 완벽한 도화지 브릿지 (+9점)]</b> 어두운 ${sweat.name} 스웨트 안쪽에 고명도 ${shirt.name} 셔츠를 받쳐 입었습니다. <b>① 목선 위로 1.5cm 올라오는 셔츠 칼라</b>가 얼굴로 시선을 끌어올리고, <b>② 스웨트 시보리 아래로 2cm 나오는 셔츠 밑단</b>이 상·하의 색상을 깔끔하게 끊어주는 '시각적 완충재(Bridge)' 역할을 합니다.`;
+        } else if (shirt.pattern.includes('stripe')) {
+          layerScore += 4;
+          tags.push('#스트라이프포인트');
+          layerLesson = `<b>[패턴 텍스처 대비 (+8점)]</b> 매끈한 단색 더블페이스 스웨트 목선 안쪽에서 <b>${shirt.name}</b>의 촘촘한 핀 스트라이프가 살짝 비치며, 자칫 심심할 수 있는 면티 느낌을 단숨에 지적인 프레피 무드로 격상시킵니다.`;
+        } else if (Math.abs(innerDiff) < 10 && sweat.tone === shirt.tone) {
+          layerScore -= 4;
+          layerLesson = `<b>[레이어드 경계 흐림 (-4점)]</b> 겉에 입은 ${sweat.name} 스웨트와 속의 ${shirt.name} 셔츠의 밝기가 너무 비슷해 겹쳐 입은 입체감이 잘 드러나지 않습니다. 안쪽 셔츠는 오프화이트(01)나 삭스블루(64)처럼 확실히 밝은 색을 고르면 훨씬 또렷해집니다.`;
+        } else if (shirt.code.includes('69') && sweat.lightness <= 35) {
+          layerScore -= 5;
+          layerLesson = `<b>[목선 암전 현상 주의 (-5점)]</b> 어두운 스웨트 안에 가장 어두운 딥 네이비(69) 셔츠를 넣으면 목 주위가 무겁고 답답해 보입니다. 딥 네이비 셔츠는 단독으로 입거나 밝은 그레이(03)/베이지(31) 스웨트 안에 입을 때 진가를 발휘합니다.`;
         } else {
-          comments.push(`👕 <b>단정한 옥스포드 단품 룩:</b> 2합사 핀포인트 옥스포드의 탄탄한 조직감이 치노/데님 실루엣과 잘 어우러집니다.`);
+          layerScore += 3;
+          layerLesson = `<b>[소재의 이질감 조화 (+7점)]</b> 겉감인 더블페이스 스웨트의 '은은한 광택과 탄탄한 두께감' 속에 2합사 핀포인트 옥스포드 셔츠의 '매트하고 까슬한 조직감'이 맞물려 깊이 있는 레이어드를 완성합니다.`;
         }
-      } else if (topMode === 'sweat') {
-        layerScore += 2;
-        comments.push(`👟 <b>미니멀 캐주얼:</b> 더블 페이스 원단의 탄탄한 볼륨감 덕분에 셔츠 없이 단품으로 입어도 실루엣이 무너지지 않습니다.`);
+      } else if (mode === 'sweat_only') {
+        layerScore += 4;
+        tags.push('#미니멀릴랙스');
+        layerLesson = `<b>[스웨트셔츠 단독 착용: 미니멀 구조미 (+4점)]</b> 셔츠를 생략하고 ${sweat.name} 스웨트만 단독으로 입은 구성입니다. 일반 기모 맨투맨과 달리 <b>유니클로 이중직(더블페이스) 원단</b>은 자체적인 형태 유지력(드레이프성)이 뛰어나 단품으로 입어도 어깨선이 입체적으로 살아납니다. 목선이 비어 보이므로 흰색 라운드 티셔츠(크루넥)를 목 끝에 0.5cm만 살짝 보이게 받쳐 입으면 완성도가 극대화됩니다.`;
+      } else if (mode === 'shirt_only') {
+        layerScore += 5;
+        tags.push('#옥스포드단품');
+        layerLesson = `<b>[옥스포드 셔츠 단독 착용: 클래식 아메리칸 (+5점)]</b> 스웨트 없이 <b>${shirt.name}</b> 셔츠만 단독으로 착용했습니다. 2합사 핀포인트 옥스포드 원단은 일반 드레스 셔츠보다 실이 굵고 조직이 입체적이라 단품으로 입어도 속이 비치지 않고 탄탄한 실루엣을 잡아줍니다.`;
       }
 
-      // [D] 아우터 & 실루엣 조화 (30점 만점)
+      // =========================================================
+      // 3. 아우터 & 2026 트렌드 / 클래식 복식 공식 (Silhouette & TPO)
+      // =========================================================
       if (outer.id === 'outer_69') {
-        // JWA 네이비 블레이저
-        if (bottom.code.includes('56') || bottom.code.includes('34') || bottom.code.includes('38') || bottom.code.includes('08') || bottom.code.includes('65')) {
-          silhouetteScore += 5;
-        }
-        if (topMode === 'sweat' || topMode === 'layered') {
+        // JWA 네이비 감탄 블레이저
+        if (mode === 'shirt_only') {
+          silhouetteScore += 6;
+          tags.push('#아이비리그정석');
+          classicTrendLesson = `<b>[클래식 공식: 1960년대 아이비리그 프레피 (만점)]</b> 네이비 블레이저(금장 단추) + 옥스포드 셔츠 + ${bottom.name} 조합은 미국 동부 명문대 스타일에서 유래한 <b>남성 복식사의 영원한 바이블</b>입니다. 특히 네이비(69)와 ${bottom.name}의 배색은 신뢰감과 경쾌함을 동시에 주는 가장 지적인 출근·외출룩입니다.`;
+        } else if (mode === 'layered' || mode === 'sweat_only') {
           if (sweat.code.includes('09')) {
             colorScore -= 4;
-            comments.push(`💡 네이비 블레이저 안에 쌩 블랙 스웨트는 명도가 뭉개질 수 있으니 회색(03)이나 베이지(31) 스웨트가 더 화사합니다.`);
+            classicTrendLesson = `<b>[네이비+블랙 명도 겹침 주의]</b> 69 네이비 블레이저 안에 09 쌩 블랙 스웨트를 넣으면 두 어두운 색이 뭉개져 블레이저의 테일러드 라인이 죽습니다. 블레이저 안에는 03 그레이나 31 베이지 스웨트를 매치해 보세요.`;
           } else {
-            silhouetteScore += 2;
-            comments.push(`🧥 <b>캐주얼 테일러링(고프레피):</b> 금장 단추 블레이저 안에 스웨트를 매치해 격식과 편안함을 동시에 잡았습니다.`);
+            silhouetteScore += 5;
+            tags.push('#2026네오프레피');
+            classicTrendLesson = `<b>[2026 핵심 트렌드: 하이-로우 믹스(High-Low Mix)]</b> 격식 있는 테일러드 블레이저 안에 캐주얼한 스웨트셔츠를 넣는 <b>'네오 프레피(Neo-Preppy)'</b> 스타일링입니다. 딱딱한 정장 느낌을 중화시켜 젊고 감각적인 2026년형 시티 캐주얼을 완성합니다.`;
           }
         }
       } else if (outer.id === 'outer_31') {
-        // 31 베이지 퍼프텍 블루종
+        // 31 베이지 퍼프텍 쇼트 블루종
         if (mainTop.code.includes('31')) {
           colorScore -= 8;
-          comments.push(`⚠️ <b>베이지 겹침 주의:</b> 아우터(31 베이지)와 상의(31 베이지)가 동일한 색이라 상체가 부해 보일 수 있습니다.`);
+          classicTrendLesson = `<b>[아우터-상의 동일 색상 팽창 주의 (-8점)]</b> 31 베이지 퍼프텍 블루종 안에 똑같은 31 베이지 상의를 입으면 밝은 오트밀 색상이 상체 전체로 퍼져 부해 보입니다. 안쪽 상의는 어두운 차콜(08), 다크브라운(39), 틸블루(66)나 네이비(69)로 눌러주세요.`;
         } else {
           silhouetteScore += 5;
-          if (bottom.code.includes('56') || bottom.code.includes('38') || bottom.code.includes('65')) {
-            colorScore += 3;
-            comments.push(`🍂 <b>어스톤 & 아웃도어 밸런스:</b> 밝은 오트밀 베이지 퍼프텍이 하의(${bottom.name})와 확실한 명도 대비를 이루어 경쾌합니다.`);
-            tags.push('#시티보이캐주얼');
-          }
+          tags.push('#숏블루종실루엣');
+          classicTrendLesson = `<b>[2026 비율 공식: 크롭 아우터 + 와이드 스트레이트 팬츠]</b> 기장이 짧은 퍼프텍 쇼트 블루종(31 베이지)이 허리선을 높여주고, 밑단 22cm의 여유로운 ${bottom.name}가 일자로 툭 떨어지며 다리가 가장 길어 보이는 A라인 비율을 만듭니다.`;
         }
       } else {
-        // 아우터 없음
+        // 아우터 안 입음
         silhouetteScore += 4;
+        classicTrendLesson = `<b>[실내 및 간절기 단품 실루엣]</b> 아우터를 벗었을 때 상·하의 1:1 비율이 가장 직접적으로 드러납니다. 수선 완료된 하의 기장(${bottom.code.includes('65') ? '73cm 쿼터 브레이크' : '72cm 노브레이크'}) 덕분에 상의를 밖으로 빼 입어도 다리가 짧아 보이지 않는 최적의 기장 세팅입니다.`;
       }
 
-      // 하의 수선 기장 언급 (고정 장점)
-      if (bottom.code.includes('65')) {
-        comments.push(`👖 <b>쿼터 브레이크 데님 핏:</b> 73cm 기장의 중청 데님이 신발 위에서 자연스럽게 1cm 꺾이며 클래식한 스탠다드 핏을 완성합니다.`);
+      // =========================================================
+      // 4. 실전 착용 디테일 처방전 (Actionable Styling Tip)
+      // =========================================================
+      if (mode === 'shirt_only') {
+        if (outer.id === 'outer_69') {
+          stylingTip = `📌 <b>착용 디테일:</b> 블레이저를 입을 때는 옥스포드 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하시고, 바지 밑위(28.5cm)가 안정적이므로 갈색이나 블랙 가죽 벨트를 채워주시면 완벽합니다.`;
+        } else {
+          stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 무심하게 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
+        }
+      } else if (mode === 'layered') {
+        stylingTip = `📌 <b>착용 디테일:</b> 옥스포드 셔츠의 카라 끝 단추(버튼다운)를 반드시 잠가야 스웨트 목선 안에서 깃이 무너지지 않고 입체적인 아치형(Roll)을 유지합니다. 소매 끝으로도 셔츠 커프스를 1cm 살짝 빼주세요.`;
       } else {
-        comments.push(`👖 <b>22cm 와이드 스트레이트 실루엣:</b> 72cm 노브레이크 기장으로 발등에 깔끔하게 떨어져 다리가 길어 보입니다.`);
+        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 하의가 72~73cm 정석 기장으로 세팅되어 있으므로, 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
       }
 
-      // 점수 상·하한 보정
+      // 점수 보정
       colorScore = Math.min(40, Math.max(15, colorScore));
       layerScore = Math.min(30, Math.max(12, layerScore));
       silhouetteScore = Math.min(30, Math.max(15, silhouetteScore));
       const total = colorScore + layerScore + silhouetteScore;
 
       let grade = 'B';
-      let mood = '깔끔한 데일리 캐주얼';
-      if (total >= 95) { grade = 'S+'; mood = '완벽한 황금 밸런스 룩'; }
+      let mood = '깔끔한 데일리 룩';
+      if (total >= 95) { grade = 'S+'; mood = '교과서급 황금 밸런스'; }
       else if (total >= 90) { grade = 'S'; mood = '검증된 클래식 스탠다드'; }
-      else if (total >= 84) { grade = 'A'; mood = '안정적인 데일리 코디'; }
-      else if (total < 76) { grade = 'C'; mood = '톤/명도 분리 보완 권장'; }
+      else if (total >= 83) { grade = 'A'; mood = '안정적인 데일리 코디'; }
+      else if (total < 76) { grade = 'C'; mood = '색상/명도 분리 보완 필요'; }
 
-      if (tags.length === 0) tags.push('#유니클로캡슐', '#정석실루엣');
+      const modeLabel = mode === 'layered' ? '스웨트+셔츠 레이어드' : (mode === 'sweat_only' ? '스웨트 단독' : '옥스포드 셔츠 단독');
 
-      return { total, colorScore, layerScore, silhouetteScore, grade, mood, comments, tags };
+      return {
+        total, colorScore, layerScore, silhouetteScore,
+        grade, mood, modeLabel, tags,
+        colorLesson, layerLesson, classicTrendLesson, stylingTip
+      };
     }
 
-    // 4. UI 렌더링 함수
     function createChipHtml(item, isSelected, onClickStr) {
-      const patternClass = item.pattern === 'stripe-gray' ? 'stripe-gray' : (item.pattern === 'stripe-blue' ? 'stripe-blue' : '');
+      let swatchClass = '';
+      if (item.pattern === 'stripe-gray') swatchClass = 'stripe-gray';
+      else if (item.pattern === 'stripe-blue') swatchClass = 'stripe-blue';
+      else if (item.pattern === 'none') swatchClass = 'none-pattern';
+
       return `
-        <button onclick="${onClickStr}" class="flex items-center gap-2.5 p-2 rounded-xl border border-gray-200 bg-white text-left transition ${isSelected ? 'chip-active' : 'hover:bg-gray-50'}">
-          <span class="w-6 h-6 rounded-full border border-black/15 flex-shrink-0 shadow-inner ${patternClass}" style="${patternClass ? '' : `background-color: ${item.hex}`}"></span>
+        <button onclick="${onClickStr}" class="flex items-center gap-2.5 p-2 rounded-xl border border-slate-200 bg-white text-left transition ${isSelected ? 'chip-active' : 'hover:bg-slate-50'}">
+          <span class="w-6 h-6 rounded-full border border-black/15 flex-shrink-0 shadow-inner ${swatchClass}" style="${swatchClass ? '' : `background-color: ${item.hex}`}"></span>
           <div class="min-w-0 flex-1">
             <div class="text-[11px] font-extrabold truncate">${item.code}</div>
-            <div class="text-[11px] text-gray-500 sub-text truncate">${item.name}</div>
+            <div class="text-[11px] text-slate-500 sub-text truncate">${item.name}</div>
           </div>
         </button>
       `;
     }
 
     function renderAll() {
-      // 모드 탭 스타일
-      ['layered', 'sweat', 'shirt'].forEach(m => {
-        const btn = document.getElementById(`modeBtn-${m}`);
-        if (state.topMode === m) {
-          btn.className = 'py-1.5 text-xs font-extrabold rounded-lg bg-gray-900 text-white shadow-sm transition';
-        } else {
-          btn.className = 'py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition';
-        }
-      });
-
-      // 섹션 표시/숨김
-      document.getElementById('sweatSection').style.display = state.topMode === 'shirt' ? 'none' : 'block';
-      document.getElementById('shirtSection').style.display = state.topMode === 'sweat' ? 'none' : 'block';
-
-      // 아우터 렌더링
       const outers = items.filter(i => i.category === 'outer');
+      const sweats = items.filter(i => i.category === 'sweat');
+      const shirts = items.filter(i => i.category === 'shirt');
+      const bottoms = items.filter(i => i.category === 'bottom');
+
       document.getElementById('outerContainer').innerHTML = outers.map(item =>
         createChipHtml(item, state.outer === item.id, `selectItem('outer', '${item.id}')`)
       ).join('');
 
-      // 스웨트 렌더링
-      const sweats = items.filter(i => i.category === 'sweat');
       document.getElementById('sweatContainer').innerHTML = sweats.map(item =>
         createChipHtml(item, state.sweat === item.id, `selectItem('sweat', '${item.id}')`)
       ).join('');
 
-      // 셔츠 렌더링
-      const shirts = items.filter(i => i.category === 'shirt');
       document.getElementById('shirtContainer').innerHTML = shirts.map(item =>
         createChipHtml(item, state.shirt === item.id, `selectItem('shirt', '${item.id}')`)
       ).join('');
 
-      // 하의 렌더링
-      const bottoms = items.filter(i => i.category === 'bottom');
       document.getElementById('bottomContainer').innerHTML = bottoms.map(item =>
         createChipHtml(item, state.bottom === item.id, `selectItem('bottom', '${item.id}')`)
       ).join('');
 
-      // 선택 라벨 업데이트
       const curOuter = getItem(state.outer) || outers[0];
       const curSweat = getItem(state.sweat) || sweats[0];
       const curShirt = getItem(state.shirt) || shirts[0];
       const curBottom = getItem(state.bottom) || bottoms[0];
 
       document.getElementById('selectedOuterLabel').textContent = curOuter.name;
-      document.getElementById('selectedSweatLabel').textContent = `${curSweat.code} (${curSweat.name})`;
-      document.getElementById('selectedShirtLabel').textContent = `${curShirt.code} (${curShirt.name})`;
+      document.getElementById('selectedSweatLabel').textContent = curSweat.id === 'sweat_none' ? '착용 안 함' : `${curSweat.code} (${curSweat.name})`;
+      document.getElementById('selectedShirtLabel').textContent = curShirt.id === 'shirt_none' ? '착용 안 함' : `${curShirt.code} (${curShirt.name})`;
       document.getElementById('selectedBottomLabel').textContent = `${curBottom.code} (${curBottom.name})`;
 
-      // 팔레트 프리뷰 업데이트
+      // 실제 착용 중인 아이템만 팔레트칩에 표시
       const activeItems = [];
       if (curOuter.id !== 'outer_none') activeItems.push(curOuter);
-      if (state.topMode !== 'shirt') activeItems.push(curSweat);
-      if (state.topMode !== 'sweat') activeItems.push(curShirt);
+      if (curSweat.id !== 'sweat_none') activeItems.push(curSweat);
+      if (curShirt.id !== 'shirt_none') activeItems.push(curShirt);
       activeItems.push(curBottom);
 
       document.getElementById('palettePreview').innerHTML = activeItems.map(i => {
         const pClass = i.pattern === 'stripe-gray' ? 'stripe-gray' : (i.pattern === 'stripe-blue' ? 'stripe-blue' : '');
-        return `<div class="w-7 h-7 rounded-full border-2 border-gray-900 shadow ${pClass}" style="${pClass ? '' : `background-color:${i.hex}`}"></div>`;
+        return `<div class="w-7 h-7 rounded-full border-2 border-slate-900 shadow ${pClass}" style="${pClass ? '' : `background-color:${i.hex}`}"></div>`;
       }).join('');
 
       document.getElementById('comboSummaryText').textContent = activeItems.map(i => i.name).join(' + ');
 
-      // 평가 계산 및 리포트 반영
-      const result = evaluateOutfit(curOuter, state.topMode, curSweat, curShirt, curBottom);
-      document.getElementById('totalScore').textContent = result.total;
-      document.getElementById('gradeBadge').textContent = result.grade;
-      document.getElementById('moodTitle').textContent = result.mood;
+      // 평가 결과 렌더링
+      const res = evaluateOutfit(curOuter, curSweat, curShirt, curBottom);
+      document.getElementById('totalScore').textContent = res.total;
+      document.getElementById('gradeBadge').textContent = res.grade;
+      document.getElementById('wearingTypeBadge').textContent = res.modeLabel;
+      document.getElementById('moodTitle').textContent = res.mood;
 
-      document.getElementById('scoreColor').textContent = `${result.colorScore} / 40`;
-      document.getElementById('barColor').style.width = `${(result.colorScore / 40) * 100}%`;
+      document.getElementById('scoreColor').textContent = `${res.colorScore} / 40`;
+      document.getElementById('barColor').style.width = `${(res.colorScore / 40) * 100}%`;
 
-      document.getElementById('scoreLayer').textContent = `${result.layerScore} / 30`;
-      document.getElementById('barLayer').style.width = `${(result.layerScore / 30) * 100}%`;
+      document.getElementById('scoreLayer').textContent = `${res.layerScore} / 30`;
+      document.getElementById('barLayer').style.width = `${(res.layerScore / 30) * 100}%`;
 
-      document.getElementById('scoreSilhouette').textContent = `${result.silhouetteScore} / 30`;
-      document.getElementById('barSilhouette').style.width = `${(result.silhouetteScore / 30) * 100}%`;
+      document.getElementById('scoreSilhouette').textContent = `${res.silhouetteScore} / 30`;
+      document.getElementById('barSilhouette').style.width = `${(res.silhouetteScore / 30) * 100}%`;
 
-      document.getElementById('toneTags').innerHTML = result.tags.slice(0, 2).map(t =>
-        `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold">${t}</span>`
+      document.getElementById('toneTags').innerHTML = res.tags.slice(0, 3).map(t =>
+        `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-extrabold">${t}</span>`
       ).join('');
 
-      document.getElementById('analysisList').innerHTML = result.comments.map(c => `<p>${c}</p>`).join('');
+      document.getElementById('learningCards').innerHTML = `
+        <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 text-slate-800">
+          <div class="font-extrabold text-indigo-900 mb-1">🎨 1. 색채 & 명도 원리</div>
+          <p>${res.colorLesson}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 text-slate-800">
+          <div class="font-extrabold text-emerald-900 mb-1">👕 2. 상의 구성 & 소재 역학 (${res.modeLabel})</div>
+          <p>${res.layerLesson}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-100 text-slate-800">
+          <div class="font-extrabold text-amber-900 mb-1">🏛️ 3. 클래식 공식 & 2026 트렌드</div>
+          <p>${res.classicTrendLesson}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-800">
+          <p>${res.stylingTip}</p>
+        </div>
+      `;
     }
 
-    // 5. S급(92점 이상) 랜덤 추천기
+    // S급(93점 이상) 랜덤 추천 (단품/레이어드 골고루 학습)
     function recommendBestRandom() {
       const outers = items.filter(i => i.category === 'outer');
       const sweats = items.filter(i => i.category === 'sweat');
       const shirts = items.filter(i => i.category === 'shirt');
       const bottoms = items.filter(i => i.category === 'bottom');
-      const modes = ['layered', 'sweat', 'shirt'];
 
       const highCombos = [];
       outers.forEach(o => {
-        modes.forEach(m => {
-          sweats.forEach(sw => {
-            shirts.forEach(sh => {
-              bottoms.forEach(b => {
-                const res = evaluateOutfit(o, m, sw, sh, b);
-                if (res.total >= 92) {
-                  highCombos.push({ outer: o.id, topMode: m, sweat: sw.id, shirt: sh.id, bottom: b.id });
-                }
-              });
+        sweats.forEach(sw => {
+          shirts.forEach(sh => {
+            if (sw.id === 'sweat_none' && sh.id === 'shirt_none') return;
+            bottoms.forEach(b => {
+              const res = evaluateOutfit(o, sw, sh, b);
+              if (res.total >= 93) {
+                highCombos.push({ outer: o.id, sweat: sw.id, shirt: sh.id, bottom: b.id });
+              }
             });
           });
         });
@@ -536,7 +552,6 @@
       }
     }
 
-    // 6. 구글 시트 CSV 연동 및 템플릿 다운로드
     function toggleModal(id) {
       const el = document.getElementById(id);
       el.classList.toggle('hidden');
@@ -550,7 +565,6 @@
         const rows = csvText.split(/\r?\n/).map(r => r.split(','));
         if (rows.length < 2) return;
 
-        const headers = rows[0].map(h => h.trim());
         const parsed = rows.slice(1).filter(r => r.length >= 7 && r[0].trim() !== '').map(r => ({
           id: r[0].trim(),
           category: r[1].trim(),
@@ -565,11 +579,16 @@
         }));
 
         if (parsed.length > 0) {
+          // 시트에 none 옵션이 누락되어 있어도 자동으로 보장
+          const hasSweatNone = parsed.some(i => i.id === 'sweat_none');
+          const hasShirtNone = parsed.some(i => i.id === 'shirt_none');
+          if (!hasSweatNone) parsed.unshift(DEFAULT_ITEMS.find(i => i.id === 'sweat_none'));
+          if (!hasShirtNone) parsed.unshift(DEFAULT_ITEMS.find(i => i.id === 'shirt_none'));
           items = parsed;
-          document.getElementById('dataSourceBadge').textContent = `구글 시트 실시간 연동됨 (${items.length}개 항목)`;
+          document.getElementById('dataSourceBadge').textContent = `구글 시트 실시간 연동됨`;
         }
       } catch (e) {
-        alert('구글 시트 CSV를 불러오지 못했습니다. 기본 데이터로 작동합니다.');
+        alert('구글 시트 CSV를 불러오지 못해 기본 데이터로 작동합니다.');
       }
     }
 
@@ -586,7 +605,7 @@
       localStorage.removeItem('wardrobe_csv_url');
       document.getElementById('csvUrlInput').value = '';
       items = [...DEFAULT_ITEMS];
-      document.getElementById('dataSourceBadge').textContent = '기본 내장 데이터 (20벌)';
+      document.getElementById('dataSourceBadge').textContent = '클래식 공식 & 2026 트렌드 학습 엔진';
       renderAll();
       toggleModal('sheetModal');
     }
@@ -599,7 +618,7 @@
       const blob = new Blob(["\uFEFF" + header + body], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'uniqlo_wardrobe_template.csv';
+      link.download = 'uniqlo_wardrobe_academy.csv';
       link.click();
     }
   </script>
