@@ -627,8 +627,9 @@
     // ==== PURE LOGIC END ====
 
     // ==== UI ====
-    // 시트 CSV 주소를 여기에 적어두면 모든 기기에서 같은 시트를 읽습니다. (비워두면 이 브라우저에 저장된 주소를 사용)
-    const SHEET_CSV_URL = '';
+    // 옷 목록의 원본 시트(웹에 게시된 CSV). 이 주소가 있으면 누가 접속해도 같은 시트를 읽습니다.
+    // 시트를 못 읽으면 아래 DEFAULT_ITEMS(백업 스냅샷)로 동작합니다. 비워두면 시트창에 입력한 주소(이 브라우저에만 저장)를 사용합니다.
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSmEH4B6exktXDoAkVTcwCBsdX7F49rvBeozcBmznPHnk4OxYB1Bu0xlEP-38pLVykx9Is3GxZyY9EE/pub?output=csv';
     const DEFAULT_BADGE = '클래식 공식 + 2026 F/W 트렌드 룰 엔진';
 
     let wardrobe = buildWardrobe(DEFAULT_ITEMS);
@@ -643,7 +644,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
       let savedCsvUrl = '';
       try { savedCsvUrl = localStorage.getItem('wardrobe_csv_url') || ''; } catch (e) {}
-      const url = savedCsvUrl || SHEET_CSV_URL;
+      const url = SHEET_CSV_URL || savedCsvUrl;
       if (url) {
         document.getElementById('csvUrlInput').value = url;
         await fetchSheetData(url);
