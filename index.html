@@ -41,7 +41,7 @@
         <button onclick="recommendBestRandom()" class="whitespace-nowrap px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
           <span>🎲 황금조합 학습</span>
         </button>
-        <button onclick="toggleModal('sheetModal')" class="whitespace-nowrap p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
+        <button id="adminBtn" onclick="toggleModal('sheetModal')" class="hidden whitespace-nowrap p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
           ⚙️ 시트
         </button>
       </div>
@@ -964,7 +964,12 @@
       bottom: 'bottom_56'
     };
 
+    // 시트 설정은 주소 뒤에 ?admin 을 붙였을 때만 보인다 (예: .../index.html?admin). 일반 방문자에게는 숨김.
+    // 이 설정은 그 브라우저에만 적용되며, 다른 사람의 화면이나 시트 원본은 바뀌지 않는다.
+    const IS_ADMIN = new URLSearchParams(location.search).has('admin');
+
     window.addEventListener('DOMContentLoaded', async () => {
+      if (IS_ADMIN) document.getElementById('adminBtn').classList.remove('hidden');
       let savedCsvUrl = '';
       try { savedCsvUrl = localStorage.getItem('wardrobe_csv_url') || ''; } catch (e) {}
       const url = SHEET_CSV_URL || savedCsvUrl;
@@ -1304,6 +1309,7 @@
     }
 
     function toggleModal(id) {
+      if (id === 'sheetModal' && !IS_ADMIN) return;
       const el = document.getElementById(id);
       el.classList.toggle('hidden');
       el.classList.toggle('flex');
