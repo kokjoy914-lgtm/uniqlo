@@ -198,32 +198,34 @@
 
     // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23 (베스트 추가)
     // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
-    // length(선택): 옷의 전체 길이(cm, 실측). 아우터·스웨트·셔츠에 적으면 밑단 노출 길이를 계산해 판정합니다.
+    // 실측은 건조기 후 기준입니다(아우터 제외). 모든 수치는 cm.
+    // length(선택): 전체 길이. 아우터·스웨트·셔츠에 적으면 밑단 노출 길이를 계산해 판정합니다.
+    // chest(선택): 가슴너비(옆선에서 옆선까지 평면 실측). 적으면 아우터를 잠글 수 있는지 안내합니다.
     // style(아우터만): blazer | coat | blouson | vest | jacket — 비우면 이름에서 추정
     // pattern: solid | stripe | check 등 (solid 외에는 패턴으로 취급)
     const DEFAULT_ITEMS = [
       // 아우터
-      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', length: 63.5, pattern: 'solid' },
-      { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', length: 73, pattern: 'solid' },
-      { id: 'outer_blouson09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 쇼트 블루종', desc: '경량 패딩 블루종 / 블랙', hex: '#111827', style: 'blouson', length: 63.5, pattern: 'solid' },
-      { id: 'outer_vest09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 컴팩트 베스트', desc: '경량 패딩 베스트 / 블랙', hex: '#111827', style: 'vest', length: 65, pattern: 'solid' },
+      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', length: 63.5, chest: 68.5, pattern: 'solid' },
+      { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', length: 73, chest: 55.5, pattern: 'solid' },
+      { id: 'outer_blouson09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 쇼트 블루종', desc: '경량 패딩 블루종 / 블랙', hex: '#111827', style: 'blouson', length: 63.5, chest: 68.5, pattern: 'solid' },
+      { id: 'outer_vest09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 컴팩트 베스트', desc: '경량 패딩 베스트 / 블랙', hex: '#111827', style: 'vest', length: 65, chest: 56, pattern: 'solid' },
 
       // 오버사이즈 스웨트셔츠
-      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', length: 69.5, pattern: 'solid' },
-      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', length: 69.5, pattern: 'solid' },
-      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', length: 69.5, pattern: 'solid' },
-      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', length: 69.5, pattern: 'solid' },
-      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', length: 69.5, pattern: 'solid' },
-      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', length: 69.5, pattern: 'solid' },
+      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', length: 69.5, chest: 62, pattern: 'solid' },
+      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', length: 69.5, chest: 62, pattern: 'solid' },
+      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', length: 69.5, chest: 62, pattern: 'solid' },
+      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', length: 69.5, chest: 62, pattern: 'solid' },
+      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', length: 69.5, chest: 62, pattern: 'solid' },
+      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', length: 69.5, chest: 62, pattern: 'solid' },
 
       // 옥스포드 셔츠
-      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', pattern: 'solid' },
-      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', pattern: 'solid' },
-      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', pattern: 'solid' },
-      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', pattern: 'solid' },
-      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 남색', hex: '#1e293b', pattern: 'solid' },
-      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', pattern: 'stripe-gray' },
-      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', pattern: 'stripe-blue' },
+      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', length: 77, chest: 60, pattern: 'solid' },
+      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', length: 77, chest: 60, pattern: 'solid' },
+      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', length: 77, chest: 60, pattern: 'solid' },
+      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', length: 77, chest: 60, pattern: 'solid' },
+      { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 남색', hex: '#1e293b', length: 77, chest: 60, pattern: 'solid' },
+      { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', length: 77, chest: 60, pattern: 'stripe-gray' },
+      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', length: 77, chest: 60, pattern: 'stripe-blue' },
 
       // 하의
       { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', pattern: 'solid' },
@@ -341,14 +343,17 @@
           style = inferOuterStyle(raw.name || '');
           warnings.push(`ℹ️ ${label}: 아우터 style이 비어 이름으로 "${style}"를 추정했습니다 (blazer/coat/blouson/jacket 중 지정 가능).`);
         }
-        let len = null;
-        if (raw.length !== undefined && String(raw.length).trim() !== '') {
-          len = Number(raw.length);
-          if (!(len > 0 && len < 200)) { warnings.push(`⚠️ ${label}: length는 cm 숫자여야 합니다 (입력: "${raw.length}"). 길이 판정에서 제외합니다.`); len = null; }
-        }
+        const readCm = (v, key) => {
+          if (v === undefined || String(v).trim() === '') return null;
+          const n = Number(v);
+          if (!(n > 0 && n < 200)) { warnings.push(`⚠️ ${label}: ${key}는 cm 숫자여야 합니다 (입력: "${v}"). 판정에서 제외합니다.`); return null; }
+          return n;
+        };
+        const len = readCm(raw.length, 'length');
+        const chest = readCm(raw.chest, 'chest');
         out.push({
           id: raw.id, category: raw.category, code: raw.code || raw.id, name: raw.name || raw.id, desc: raw.desc || '',
-          len, hex: color.hex, none: false, lightness, chroma: Math.round(color.C), hue: Math.round(color.h),
+          len, chest, hex: color.hex, none: false, lightness, chroma: Math.round(color.C), hue: Math.round(color.h),
           tone: tone || derivedTone, temp: (raw.temp || '').toLowerCase() || deriveTemp(color),
           pattern, patterned: pattern !== 'solid' && pattern !== 'none', style
         });
@@ -360,7 +365,7 @@
       return { items: out, warnings };
     }
     function prepareNone(n) {
-      return { ...n, len: null, hex: '#f8fafc', none: true, lightness: 95, chroma: 0, hue: 0, tone: 'none', temp: 'neutral', pattern: 'none', patterned: false, style: '' };
+      return { ...n, len: null, chest: null, hex: '#f8fafc', none: true, lightness: 95, chroma: 0, hue: 0, tone: 'none', temp: 'neutral', pattern: 'none', patterned: false, style: '' };
     }
 
     // 상의 착용 형태 판별 ('layered' | 'sweat_only' | 'shirt_only')
@@ -377,6 +382,9 @@
     //             1960s 초반 프레피 무드, 니트/스웨트 레이어링, 셔츠 칼라 디테일 강조
     // 모든 규칙은 옷의 번호가 아니라 속성(명도·톤·색상각·패턴·아우터 style)으로 판정합니다.
     // =========================================================
+    // 착용자 키(cm). 셔츠를 빼입었을 때 허용되는 최대 길이를 정하는 기준입니다(키의 약 43%).
+    const BODY = { height: 174 };
+
     const SCORE_RULES = {
       base:   { color: 28, layer: 17, silhouette: 18 },   // 각 영역 기본점 (만점: 40 / 30 / 30)
       limits: { color: [10, 40], layer: [8, 30], silhouette: [8, 30] },
@@ -409,17 +417,24 @@
       const style = outer.none ? 'none' : (outer.style || 'jacket');
       const structured = style === 'blazer' || style === 'coat';
       if (mode === 'shirt_only') {
+        const over = (outer.len && shirt.len) ? Math.round((shirt.len - outer.len) * 10) / 10 : null;
         if (structured) {
-          return { target: '셔츠', action: '넣어 입기', icon: '👔', short: '구조적 아우터 안은 깔끔하게',
-            reason: `${outer.name} 안에서 셔츠 밑단이 삐져나오면 아우터의 라인이 무너집니다. 바지 안에 넣고 가죽 벨트로 허리선을 잡아주세요.` };
+          const num = over !== null && over > 0 ? ` 셔츠(${cm(shirt.len)})가 ${outer.name}(${cm(outer.len)})보다 ${cm(over)} 길어 빼입으면 밑단이 아우터 밖으로 나옵니다.` : '';
+          return { target: '셔츠', action: '넣어 입기', icon: '👔', short: over !== null && over > 0 ? `셔츠가 아우터보다 ${cm(over)} 김` : '구조적 아우터 안은 깔끔하게',
+            reason: `${outer.name} 안에서 셔츠 밑단이 삐져나오면 아우터의 라인이 무너집니다.${num} 바지 안에 넣고 가죽 벨트로 허리선을 잡아주세요.` };
         }
         if (style === 'none') {
+          const maxUntucked = Math.round(BODY.height * 0.43);
+          if (shirt.len && shirt.len > maxUntucked) {
+            return { target: '셔츠', action: '넣어 입기', icon: '👔', short: `셔츠 ${cm(shirt.len)}는 빼입기엔 김`,
+              reason: `셔츠 길이가 ${cm(shirt.len)}로, 키 ${BODY.height}cm 기준 빼입기 적정 한도(약 ${maxUntucked}cm)를 넘어 허벅지 위까지 내려옵니다. 다리가 짧아 보이므로 바지에 넣어 입으세요. 단정한 느낌이 부담되면 앞쪽만 넣는 반넣입도 좋습니다.` };
+          }
           return { target: '셔츠', action: '빼입기', icon: '👕', short: '앞만 1~2cm 살짝 넣기',
             reason: `아우터가 없을 때는 셔츠를 빼입는 편이 자연스럽습니다. 맨 위 단추 1개를 풀고 소매를 팔꿈치 아래까지 걷어 올린 뒤, 앞쪽만 1~2cm 살짝 넣으면 다리가 길어 보입니다.` };
         }
-        const len = outer.len ? ` (${outer.name} 길이 ${cm(outer.len)})` : '';
-        return { target: '셔츠', action: '넣어 입기', icon: '👔', short: '아우터 기장이 짧아 밑단이 튀어나옴',
-          reason: `${outer.name}은 기장이 짧아${len} 셔츠를 빼입으면 밑단이 아우터 밖으로 길게 나와 하체 비율이 짧아 보입니다. 바지 안에 넣어 입거나, 최소한 앞쪽만 넣으세요.` };
+        const num = over !== null && over > 0 ? ` 셔츠(${cm(shirt.len)})가 ${outer.name}(${cm(outer.len)})보다 ${cm(over)} 길어` : ` ${outer.name}은 기장이 짧아`;
+        return { target: '셔츠', action: '넣어 입기', icon: '👔', short: over !== null && over > 0 ? `셔츠가 아우터보다 ${cm(over)} 김` : '아우터 기장이 짧아 밑단이 튀어나옴',
+          reason: `${num} 셔츠를 빼입으면 밑단이 아우터 밖으로 길게 나와 하체 비율이 짧아 보입니다. 바지 안에 넣어 입거나, 최소한 앞쪽만 넣으세요.` };
       }
       if (mode === 'layered') {
         const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
@@ -455,6 +470,10 @@
         } else if (structured) {
           sweatLine = ` 스웨트와 셔츠 모두 ${outer.name} 밑단 밖으로는 나오지 않게 앞쪽을 정리하세요.`;
         }
+        if (hem.shirtBelowSweat !== null && hem.shirtBelowSweat > 4) {
+          return { target: '셔츠', action: '넣고 스웨트는 빼입기', icon: '👔', short: `셔츠가 스웨트보다 ${cm(hem.shirtBelowSweat)} 김`,
+            reason: `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(hem.shirtBelowSweat)} 길어 빼입으면 밑단이 한 뼘 가까이 나와 단정치 못합니다. 셔츠는 바지에 넣고 스웨트만 빼입으세요. 스웨트가 허리를 덮어 셔츠를 넣은 부피가 드러나지 않습니다. 밑단 브릿지는 쓸 수 없으니 칼라와 소매 커프스로 대신합니다.${sweatLine}` };
+        }
         return { target: '셔츠·스웨트', action: '모두 빼입기', icon: '👕', short,
           reason: `스웨트 안의 셔츠도, 스웨트도 바지에 넣지 않습니다. 두 겹을 넣으면 허리에 부피가 몰려 부해 보입니다. ${shirtLine}${sweatLine}` };
       }
@@ -480,6 +499,8 @@
       let colorLesson = '';
       let layerLesson = '';
       let classicTrendLesson = '';
+
+      const hem = getHem(outer, sweat, shirt, mode);
 
       // 실제로 보이는 아이템 (아우터 포함, '안 입음' 제외)
       const visible = [outer, sweat, shirt, bottom].filter(i => !i.none);
@@ -562,15 +583,24 @@
         layerScore += 3;
         const innerDiff = shirt.lightness - sweat.lightness;
         const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
+        // 밑단 브릿지: 셔츠가 스웨트 밑단 아래로 1~4cm 나올 때만 성립. 너무 길면 셔츠를 넣어 입고 칼라·커프스가 브릿지를 대신한다
+        const gS = hem.shirtBelowSweat;
+        const hemBridgeText = gS === null
+          ? `<b>② 스웨트 아래로 나오는 셔츠 밑단</b>이 상·하의를 끊어주는 '시각적 완충재' 역할을 합니다.`
+          : (gS >= 1 && gS <= 4
+            ? `<b>② 스웨트 밑단 아래로 ${cm(gS)} 나오는 셔츠 밑단</b>이 상·하의를 끊어줍니다.`
+            : (gS > 4
+              ? `<b>② 셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(gS)} 길어</b> 밑단 브릿지로는 너무 깁니다. 셔츠를 바지에 넣어 허리선을 정리하고, 칼라와 소매 커프스가 브릿지를 대신합니다.`
+              : `<b>② 셔츠 밑단은 스웨트에 가려져</b> 칼라와 소매 커프스가 브릿지 역할을 합니다.`));
 
         if (bridge && shirt.patterned) {
           layerScore += 11;
           tags.push('#브릿지분리법', '#패턴포인트');
-          layerLesson = `<b>[어두운 스웨트 + 패턴 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝히고, 밑단 2cm가 상·하의를 끊어줍니다. 패턴의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
+          layerLesson = `<b>[어두운 스웨트 + 패턴 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝힙니다. ${hemBridgeText} 패턴의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
         } else if (bridge) {
           layerScore += 8;
           tags.push('#브릿지분리법');
-          layerLesson = `<b>[완벽한 도화지 브릿지 (+11점)]</b> 어두운 ${sweat.name} 안쪽에 고명도 ${shirt.name} 셔츠를 받쳤습니다. <b>① 목선 위로 올라오는 칼라</b>가 시선을 얼굴로 끌어올리고, <b>② 스웨트 아래로 나오는 셔츠 밑단</b>이 상·하의를 끊어주는 '시각적 완충재' 역할을 합니다.`;
+          layerLesson = `<b>[완벽한 도화지 브릿지 (+11점)]</b> 어두운 ${sweat.name} 안쪽에 고명도 ${shirt.name} 셔츠를 받쳤습니다. <b>① 목선 위로 올라오는 칼라</b>가 시선을 얼굴로 끌어올리고, ${hemBridgeText}`;
         } else if (shirt.patterned && innerDiff >= 20) {
           layerScore += 7;
           tags.push('#패턴포인트');
@@ -704,7 +734,6 @@
       }
 
       // 밑단 리듬: 스웨트가 아우터 밑단 아래로 보이는 길이 (시트에 length가 있을 때만)
-      const hem = getHem(outer, sweat, shirt, mode);
       if (hem.sweatBelowOuter !== null) {
         const g = hem.sweatBelowOuter;
         if (style === 'blazer' || style === 'coat') {
@@ -739,9 +768,8 @@
         } else if (bridge && g < 1) {
           layerScore -= 2;
           layerLesson += `<br><br>📏 <b>브릿지 길이 부족 (-2점):</b> 셔츠 밑단이 스웨트 아래로 ${g < 0 ? '나오지 않아' : cm(g) + '만 나와'} 상·하의를 끊는 효과가 없습니다.`;
-        } else if (g > 6) {
-          layerScore -= 2;
-          layerLesson += `<br><br>📏 <b>셔츠가 너무 길게 나옴 (-2점):</b> 셔츠 밑단이 스웨트 아래로 ${cm(g)} 나와 단정치 못해 보입니다.`;
+        } else if (g > 4) {
+          layerLesson += `<br><br>📏 <b>셔츠가 스웨트보다 ${cm(g)} 김 (±0점):</b> 빼입으면 밑단이 너무 길게 나와 단정치 못합니다. 셔츠를 바지에 넣어 입는 것으로 정리되므로 감점은 없지만, 밑단 브릿지 효과는 쓸 수 없습니다.`;
         }
       }
 
@@ -776,14 +804,25 @@
       } else {
         pushTip('목선', '크루넥 시보리가 목에 딱 붙게 입고, 목선이 늘어났다면 흰색 티를 0.5cm만 보이게 받쳐 입으세요.');
       }
-      // ② 아우터 여밈
-      if (style === 'blazer') pushTip('여밈', '단추는 맨 위 1개만 잠그세요(금장 단추 2개면 위 하나). 모두 잠그면 어깨선과 가슴선이 당겨 보입니다.');
+      // ② 아우터 여밈 (가슴너비 실측이 있으면 잠글 수 있는지 계산)
+      const innerChestItem = mode === 'shirt_only' ? shirt : sweat;
+      const closeGap = (!outer.none && outer.chest && innerChestItem.chest) ? Math.round((outer.chest - innerChestItem.chest) * 10) / 10 : null;
+      // 평면 실측은 옷이 몸에서 접히는 양을 반영하지 않으므로, 5cm 넘게 좁을 때만 '열어서', 그 안쪽은 '빠듯함'으로 안내한다
+      if (closeGap !== null && closeGap < -5) {
+        pushTip('여밈', `${outer.name} 가슴너비(${cm(outer.chest)})가 ${innerChestItem.name}(${cm(innerChestItem.chest)})보다 ${cm(-closeGap)} 좁아 잠그면 이너가 눌려 부풉니다. 열어서 입으세요. ${style === 'vest' || style === 'blouson' ? '지퍼를 열면 이너의 소매와 칼라가 그대로 보여 오히려 대비가 살아납니다.' : '앞을 열어도 라인이 서는 구조라 이너가 그대로 보이는 것이 의도된 룩입니다.'}`);
+      } else if (closeGap !== null && closeGap < 3) {
+        const rel = closeGap < 0 ? `${cm(-closeGap)} 좁아` : `${cm(closeGap)}만 넓어`;
+        pushTip('여밈', `${outer.name} 가슴너비(${cm(outer.chest)})가 ${innerChestItem.name}(${cm(innerChestItem.chest)})보다 ${rel} 잠그면 빠듯합니다. ${style === 'blazer' ? '단추는 맨 위 1개만 잠그거나 열어 두세요.' : '지퍼는 가슴 아래까지만 올리세요.'}`);
+      } else if (style === 'blazer') pushTip('여밈', '단추는 맨 위 1개만 잠그세요(금장 단추 2개면 위 하나). 모두 잠그면 어깨선과 가슴선이 당겨 보입니다.');
       else if (style === 'coat') pushTip('여밈', '코트는 단추를 열어 두는 편이 세로선이 길게 살아납니다. 추울 때만 위 단추 1개를 잠그세요.');
       else if (style === 'vest') pushTip('여밈', mode === 'sweat_only' || mode === 'layered'
         ? '지퍼는 가슴 아래까지만 올리세요. 오버사이즈 스웨트 위에서는 끝까지 올리면 몸통이 눌려 소매 부피만 도드라집니다.'
         : '지퍼는 가슴 높이까지만 올려 셔츠 칼라와 소매가 보이게 하세요.');
-      else if (style === 'blouson') pushTip('여밈', '지퍼는 가슴 높이까지만 올리세요. 끝까지 올리면 목이 답답해 보이고 칼라·스웨트 목선이 가려집니다.');
+      else if (style === 'blouson') pushTip('여밈', '지퍼는 가슴 높이까지만 올리세요. 끝까지 올리면 목이 답답해 보이고 칼라·이너 목선이 가려집니다.');
       else if (style === 'jacket') pushTip('여밈', '여밈을 열어 이너의 색이 보이게 하세요. 열린 폭만큼 이너의 대비가 살아납니다.');
+      if (closeGap !== null && closeGap >= 3 && tips.length && tips[tips.length - 1].label === '여밈') {
+        tips[tips.length - 1].text += ` (가슴너비 여유 ${cm(closeGap)}라 잠가도 이너가 눌리지 않습니다.)`;
+      }
       // ③ 소매
       if (mode === 'layered') pushTip('소매', `스웨트 소매를 한 번 밀어 올려 손목을 드러내고, ${cuffRule}`);
       else if (mode === 'shirt_only') pushTip('소매', style === 'blazer' || style === 'coat'
@@ -1086,7 +1125,7 @@
 
     function downloadTemplateCsv() {
       // 필수: id,category,code,name,hex / 나머지는 비워도 됨 (명도·톤·온도는 hex에서 자동 계산)
-      const cols = ['id', 'category', 'code', 'name', 'desc', 'hex', 'pattern', 'style', 'length', 'tone', 'temp'];
+      const cols = ['id', 'category', 'code', 'name', 'desc', 'hex', 'pattern', 'style', 'length', 'chest', 'tone', 'temp'];
       const esc = v => /[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v;
       const body = DEFAULT_ITEMS.map(i => cols.map(c => esc(i[c] || '')).join(',')).join('\n');
       const blob = new Blob(["\uFEFF" + cols.join(',') + '\n' + body], { type: 'text/csv;charset=utf-8;' });
