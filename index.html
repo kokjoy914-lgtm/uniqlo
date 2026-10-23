@@ -680,15 +680,23 @@
       renderAll();
     }
 
-    // 칩/팔레트 색상 표시 (패턴 옷은 hex를 어둡게 한 줄무늬로 표현)
+    // 칩/팔레트 색상 표시: 패턴 옷은 hex를 바탕색으로 깔고, 같은 색상 계열의 더 진한 줄무늬를 얹는다
     function swatchBackground(item) {
       if (item.none) return 'repeating-linear-gradient(45deg,#f8fafc,#f8fafc 5px,#e2e8f0 5px,#e2e8f0 10px)';
-      if (item.patterned) {
-        const n = parseInt(item.hex.slice(1), 16);
-        const dark = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * 0.62).toString(16).padStart(2, '0')).join('');
-        return `repeating-linear-gradient(90deg,#ffffff,#ffffff 4px,#${dark} 4px,#${dark} 6px)`;
+      if (!item.patterned) return item.hex;
+      const n = parseInt(item.hex.slice(1), 16);
+      const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255].map(v => v / 255);
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+      let hue = 0, s = 0;
+      if (d) {
+        s = d / (1 - Math.abs(2 * l - 1));
+        hue = mx === r ? ((g - b) / d + 6) % 6 : (mx === g ? (b - r) / d + 2 : (r - g) / d + 4);
+        hue *= 60;
       }
-      return item.hex;
+      // 선명한 색(블루 등)은 채도를 유지하고, 무채색에 가까운 색(회색 등)은 채도를 낮춰 회색으로 남긴다
+      const lineSat = s > 0.45 ? s : s * 0.5;
+      const line = `hsl(${Math.round(hue)},${Math.round(lineSat * 100)}%,${Math.round(l * 100 * 0.65)}%)`;
+      return `repeating-linear-gradient(90deg,${item.hex},${item.hex} 4px,${line} 4px,${line} 6px)`;
     }
 
     function createChipHtml(item, isSelected, onClickStr) {
