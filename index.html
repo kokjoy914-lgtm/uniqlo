@@ -466,10 +466,16 @@
     // 레이어 밑단 노출(cm). 길이(length)가 시트에 있는 층끼리만 계산한다.
     // sweatBelowOuter: 스웨트가 아우터 밑단 아래로 나오는 길이(음수면 아우터에 가려짐)
     // shirtBelowSweat: 셔츠가 스웨트 밑단 아래로 나오는 길이(음수면 스웨트에 가려짐)
+    // 셔츠의 '전체 길이' 실측은 뒤 중심(셔츠테일에서 가장 긴 곳) 기준이다. 앞에서 보이는 기장은 보통 약 4cm 짧다.
+    const SHIRT_TAIL = 4;
+    const shirtFront = shirt => shirt.len ? shirt.len - SHIRT_TAIL : null;
+    // 셔츠 밑단이 바깥 옷 아래로 이 정도까지 보이면 의도된 레이어로 읽힌다(그 이상이면 넣어 입기 권장)
+    const SHIRT_PEEK_MAX = 10;
+
     function getHem(outer, sweat, shirt, mode) {
       const hem = { sweatBelowOuter: null, shirtBelowSweat: null };
       if (mode !== 'shirt_only' && !outer.none && outer.len && sweat.len) hem.sweatBelowOuter = Math.round((sweat.len - outer.len) * 10) / 10;
-      if (mode === 'layered' && sweat.len && shirt.len) hem.shirtBelowSweat = Math.round((shirt.len - sweat.len) * 10) / 10;
+      if (mode === 'layered' && sweat.len && shirt.len) hem.shirtBelowSweat = Math.round((shirtFront(shirt) - sweat.len) * 10) / 10;
       return hem;
     }
 
@@ -478,22 +484,29 @@
       const style = outer.none ? 'none' : (outer.style || 'jacket');
       const structured = style === 'blazer' || style === 'coat';
       if (mode === 'shirt_only') {
-        const over = (outer.len && shirt.len) ? Math.round((shirt.len - outer.len) * 10) / 10 : null;
+        const front = shirtFront(shirt);
+        const over = (outer.len && front) ? Math.round((front - outer.len) * 10) / 10 : null;
         if (structured) {
-          const num = over !== null && over > 0 ? ` 셔츠(${cm(shirt.len)})가 ${outer.short}(${cm(outer.len)})보다 ${cm(over)} 길어 빼입으면 밑단이 아우터 밖으로 나옵니다.` : '';
+          const num = over !== null && over > 0 ? ` 셔츠 앞 기장(약 ${cm(front)})이 ${outer.short}(${cm(outer.len)})보다 ${cm(over)} 길어 빼입으면 밑단이 아우터 밖으로 나옵니다.` : '';
           return { target: '셔츠', action: '넣어 입기', icon: '👔', short: over !== null && over > 0 ? `셔츠가 아우터보다 ${cm(over)} 김` : '구조적 아우터 안은 깔끔하게',
             reason: `${outer.short} 안에서 셔츠 밑단이 삐져나오면 아우터의 라인이 무너집니다.${num} 바지 안에 넣고 가죽 벨트로 허리선을 잡아주세요.` };
         }
         if (style === 'none') {
           const maxUntucked = Math.round(BODY.height * 0.43);
-          if (shirt.len && shirt.len > maxUntucked) {
-            return { target: '셔츠', action: '넣어 입기', icon: '👔', short: `셔츠 ${cm(shirt.len)}는 빼입기엔 김`,
-              reason: `셔츠 길이가 ${cm(shirt.len)}로, 키 ${BODY.height}cm 기준 빼입기 적정 한도(약 ${maxUntucked}cm)를 넘어 허벅지 위까지 내려옵니다. 다리가 짧아 보이므로 바지에 넣어 입으세요. 단정한 느낌이 부담되면 앞쪽만 넣는 반넣입도 좋습니다.` };
+          if (front && front > maxUntucked) {
+            return { target: '셔츠', action: '넣어 입기', icon: '👔', short: '빼입기엔 기장이 김',
+              reason: `셔츠 앞 기장(약 ${cm(front)})이 빼입기 적정 기장을 넘어 허벅지 위까지 내려옵니다. 다리가 짧아 보이므로 바지에 넣어 입으세요. 단정한 느낌이 부담되면 앞쪽만 넣는 반넣입도 좋습니다.` };
           }
-          return { target: '셔츠', action: '빼입기', icon: '👕', short: '앞만 1~2cm 살짝 넣기',
-            reason: `아우터가 없을 때는 셔츠를 빼입는 편이 자연스럽습니다. 맨 위 단추 1개를 풀고 소매를 팔꿈치 아래까지 걷어 올린 뒤, 앞쪽만 1~2cm 살짝 넣으면 다리가 길어 보입니다.` };
+          return { target: '셔츠', action: '빼입기', icon: '👕', short: '셔츠테일 그대로, 앞만 살짝 넣어도 OK',
+            reason: `옥스포드 셔츠는 셔츠테일(앞뒤가 둥근 밑단)이라 빼입도록 만들어진 캐주얼 셔츠입니다.${front ? ` 앞 기장 약 ${cm(front)}로 빼입기에 적당합니다.` : ''} 맨 위 단추 1개를 풀고 소매를 팔꿈치 아래까지 걷어 올리세요. 앞쪽만 1~2cm 살짝 넣으면 다리가 더 길어 보입니다.` };
         }
-        const num = over !== null && over > 0 ? ` 셔츠(${cm(shirt.len)})가 ${outer.short}(${cm(outer.len)})보다 ${cm(over)} 길어` : ` ${outer.short}은 기장이 짧아`;
+        if (over !== null && over <= SHIRT_PEEK_MAX) {
+          return { target: '셔츠', action: '빼입기', icon: '👕', short: over > 0 ? `아우터 아래로 셔츠 ${cm(over)} 레이어` : '아우터 안에 가려짐',
+            reason: over > 0
+              ? `셔츠 밑단이 ${outer.short} 아래로 약 ${cm(over)} 보이는 캐주얼 레이어드입니다. 짧은 아우터 아래로 셔츠테일이 보이는 것은 흔한 스타일링이라 빼입어도 좋습니다. 더 단정하고 다리가 길어 보이길 원하면 넣어 입으세요.`
+              : `셔츠 밑단이 ${outer.short} 안에 가려지므로 빼입어도 깔끔합니다.` };
+        }
+        const num = over !== null && over > 0 ? ` 셔츠 앞 기장(약 ${cm(front)})이 ${outer.short}(${cm(outer.len)})보다 ${cm(over)} 길어` : ` ${outer.short}은 기장이 짧아`;
         return { target: '셔츠', action: '넣어 입기', icon: '👔', short: over !== null && over > 0 ? `셔츠가 아우터보다 ${cm(over)} 김` : '아우터 기장이 짧아 밑단이 튀어나옴',
           reason: `${num} 셔츠를 빼입으면 밑단이 아우터 밖으로 길게 나와 하체 비율이 짧아 보입니다. 바지 안에 넣어 입거나, 최소한 앞쪽만 넣으세요.` };
       }
@@ -505,8 +518,8 @@
         if (hem.shirtBelowSweat !== null) {
           const g = hem.shirtBelowSweat;
           shirtLine = g < 0
-            ? `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(-g)} 짧아 밑단이 가려집니다. 셔츠 밑단으로 상·하의를 끊는 효과는 없습니다.`
-            : `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)}) 밑단 아래로 ${cm(g)} 나옵니다. ${bridge ? (g >= 1 && g <= 4 ? '브릿지로 쓰기 좋은 길이입니다.' : (g > 4 ? '조금 길어 보일 수 있으니 셔츠를 넣어 입는 편이 깔끔합니다.' : '거의 안 보이므로 한 번 빼서 정리하세요.')) : '색 대비가 약해 효과가 작으니 1cm 이내로 정리하세요.'}`;
+            ? `셔츠 앞 기장이 스웨트(${cm(sweat.len)})보다 ${cm(-g)} 짧아 밑단이 가려집니다. 셔츠 밑단으로 상·하의를 끊는 효과는 없습니다.`
+            : `셔츠 앞 밑단이 스웨트(${cm(sweat.len)}) 아래로 약 ${cm(g)} 나옵니다. ${bridge ? (g >= 1 && g <= 4 ? '상·하의를 끊어주는 브릿지로 딱 좋은 길이입니다.' : (g > 4 ? '셔츠테일이 보이는 레이어드로 자연스럽게 읽힙니다.' : '거의 안 보이므로 한 번 빼서 정리하세요.')) : (g > 4 ? '셔츠테일이 보이는 레이어드입니다.' : '색 대비가 약해 은은하게 보입니다.')}`;
           short = g < 0 ? '셔츠 밑단이 스웨트에 가려짐' : `셔츠 밑단 스웨트 아래로 ${cm(g)}`;
         } else {
           shirtLine = bridge
@@ -531,12 +544,12 @@
         } else if (structured) {
           sweatLine = ` 스웨트와 셔츠 모두 ${outer.short} 밑단 밖으로는 나오지 않게 앞쪽을 정리하세요.`;
         }
-        if (hem.shirtBelowSweat !== null && hem.shirtBelowSweat > 4) {
+        if (hem.shirtBelowSweat !== null && hem.shirtBelowSweat > SHIRT_PEEK_MAX) {
           return { target: '셔츠', action: '넣어 입기', icon: '👔', short: `셔츠가 스웨트보다 ${cm(hem.shirtBelowSweat)} 김`,
-            reason: `셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(hem.shirtBelowSweat)} 길어 빼입으면 밑단이 한 뼘 가까이 나와 단정치 못합니다. 셔츠는 바지에 넣어 입으세요(스웨트는 평소처럼 빼입습니다). 스웨트가 허리를 덮어 셔츠를 넣은 부피가 드러나지 않습니다. 밑단 브릿지는 쓸 수 없으니 칼라와 소매 커프스로 대신합니다.${sweatLine}` };
+            reason: `셔츠 앞 밑단이 스웨트(${cm(sweat.len)})보다 ${cm(hem.shirtBelowSweat)} 길어 빼입으면 밑단이 한 뼘 넘게 나와 단정치 못합니다. 셔츠는 바지에 넣어 입으세요(스웨트는 평소처럼 빼입습니다). 스웨트가 허리를 덮어 셔츠를 넣은 부피가 드러나지 않습니다. 밑단 브릿지는 쓸 수 없으니 칼라와 소매 커프스로 대신합니다.${sweatLine}` };
         }
         return { target: '셔츠', action: '빼입기', icon: '👕', short,
-          reason: `스웨트 안의 셔츠는 바지에 넣지 않습니다. 두 겹이 허리에 몰려 부해 보이기 때문입니다. ${shirtLine}${sweatLine}` };
+          reason: `스웨트 안의 셔츠는 빼입습니다. 넣으면 두 겹이 허리에 몰려 부해 보입니다. ${shirtLine}${sweatLine}` };
       }
       let sweatOnly = `오버사이즈 스웨트는 바지에 넣지 않고 밑단 시보리를 골반에 살짝 걸쳐 입습니다. 넣으면 볼륨이 허리에 뭉쳐 비율이 무너집니다.`;
       if (hem.sweatBelowOuter !== null && !structured) {
@@ -666,9 +679,11 @@
         const hemBridgeText = gS === null
           ? `<b>② 스웨트 아래로 나오는 셔츠 밑단</b>이 상·하의를 끊어주는 '시각적 완충재' 역할을 합니다.`
           : (gS >= 1 && gS <= 4
-            ? `<b>② 스웨트 밑단 아래로 ${cm(gS)} 나오는 셔츠 밑단</b>이 상·하의를 끊어줍니다.`
-            : (gS > 4
-              ? `<b>② 셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(gS)} 길어</b> 밑단 브릿지로는 너무 깁니다. 셔츠를 바지에 넣어 허리선을 정리하고, 칼라와 소매 커프스가 브릿지를 대신합니다.`
+            ? `<b>② 스웨트 밑단 아래로 약 ${cm(gS)} 나오는 셔츠 밑단</b>이 상·하의를 끊어줍니다.`
+            : (gS > SHIRT_PEEK_MAX
+              ? `<b>② 셔츠 앞 밑단이 스웨트보다 ${cm(gS)} 길어</b> 밑단 브릿지로는 너무 깁니다. 셔츠를 바지에 넣어 허리선을 정리하고, 칼라와 소매 커프스가 브릿지를 대신합니다.`
+              : gS > 4
+              ? `<b>② 스웨트 아래로 약 ${cm(gS)} 보이는 셔츠테일</b>이 층을 만들며 상·하의를 나눕니다.`
               : `<b>② 셔츠 밑단은 스웨트에 가려져</b> 칼라와 소매 커프스가 브릿지 역할을 합니다.`));
 
         const dE = deltaE(sweat, shirt);
@@ -852,13 +867,12 @@
         const g = hem.shirtBelowSweat;
         const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
         if (bridge && g >= 1 && g <= 4) {
-          layerScore += 2;
           tags.push('#브릿지길이');
-          layerLesson += `<br><br>📏 <b>셔츠 밑단 브릿지 (+2점):</b> 셔츠(${cm(shirt.len)})가 스웨트 아래로 ${cm(g)} 나와 상·하의를 끊어주는 길이입니다.`;
+          layerLesson += `<br><br>📏 <b>셔츠 밑단 브릿지 확인 (±0점):</b> 셔츠 앞 밑단이 스웨트 아래로 약 ${cm(g)} 나와 상·하의를 끊어주는 길이입니다.`;
         } else if (bridge && g < 1) {
           layerScore -= 2;
           layerLesson += `<br><br>📏 <b>브릿지 길이 부족 (-2점):</b> 셔츠 밑단이 스웨트 아래로 ${g < 0 ? '나오지 않아' : cm(g) + '만 나와'} 상·하의를 끊는 효과가 없습니다.`;
-        } else if (g > 4) {
+        } else if (g > SHIRT_PEEK_MAX) {
           layerLesson += `<br><br>📏 <b>셔츠가 스웨트보다 ${cm(g)} 김 (±0점):</b> 빼입으면 밑단이 너무 길게 나와 단정치 못합니다. 셔츠를 바지에 넣어 입는 것으로 정리되므로 감점은 없지만, 밑단 브릿지 효과는 쓸 수 없습니다.`;
         }
       }
@@ -1094,23 +1108,24 @@
       const seam = (d, it, w = 0.3, dash = '') => `<path d="${d}" fill="none" stroke="${lineOf(it.hex)}" stroke-width="${w}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
 
       // ----- 팔 골격 (A자로 살짝 벌린 자세) -----
-      const ARM = s => [[s * 21, 31.5], [s * 25.5, 59], [s * 28, 86], [s * 28.6, 95]];   // 어깨·팔꿈치·손목·손끝
+      const ARM = s => [[s * 20.5, 34], [s * 25.2, 59], [s * 27.6, 86], [s * 28.2, 95]];   // 어깨 관절·팔꿈치·손목·손끝
       const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-      // 팔을 따라가는 소매: 시작점 t0(어깨→팔꿈치 비율)부터 손목 너머 extra cm까지, 폭은 위 w0 → 아래 w1
-      const sleevePath = (s, t0, extra, w0, w1) => {
+      const unit = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dx / l, dy / l]; };
+      const outward = (s, u) => [s * u[1], -s * u[0]];   // 팔 방향에 수직인 바깥쪽 단위벡터
+      // 소매: 몸판 어깨 끝점 T에서 팔 바깥선을, 겨드랑이 P에서 팔 안쪽선을 따라 손목까지.
+      // 소매 윗변(P→T)은 몸판 아래에 깔리므로 어깨선이 솟아 보이지 않는다. wE·wW는 팔꿈치·손목의 반폭, extra는 손목 너머 길이
+      const sleevePath = (s, T, P, wE, wW, extra) => {
         const A = ARM(s);
-        const q0 = lerp(A[0], A[1], t0), p0 = [q0[0] - s * 1.6, q0[1] - 0.6], p1 = A[1], p2 = A[2];
-        const dx = A[3][0] - A[2][0], dy = A[3][1] - A[2][1], dl = Math.hypot(dx, dy);
-        const p3 = [p2[0] + dx / dl * extra, p2[1] + dy / dl * extra];
-        const pts = [p0, p1, p3], ws = [w0, (w0 + w1) / 2 + 0.3, w1];
-        const L = [], R = [];
-        pts.forEach((p, i) => {
-          const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
-          let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const nl = Math.hypot(nx, ny); nx /= nl; ny /= nl;
-          L.push([p[0] + nx * ws[i], p[1] + ny * ws[i]]); R.push([p[0] - nx * ws[i], p[1] - ny * ws[i]]);
-        });
-        const d = `M ${r1(L[0][0])},${r1(L[0][1])} Q ${r1(L[1][0])},${r1(L[1][1])} ${r1(L[2][0])},${r1(L[2][1])} L ${r1(R[2][0])},${r1(R[2][1])} Q ${r1(R[1][0])},${r1(R[1][1])} ${r1(R[0][0])},${r1(R[0][1])} Z`;
-        return { d, end: p3, endL: L[2], endR: R[2], dir: [dx / dl, dy / dl] };
+        const uUp = unit(A[0], A[2]), uFore = unit(A[1], A[3]);
+        const oE = outward(s, uUp), oW = outward(s, uFore);
+        const end = [A[2][0] + uFore[0] * extra, A[2][1] + uFore[1] * extra];
+        const Eo = [A[1][0] + oE[0] * wE, A[1][1] + oE[1] * wE], Ei = [A[1][0] - oE[0] * wE, A[1][1] - oE[1] * wE];
+        const Wo = [end[0] + oW[0] * wW, end[1] + oW[1] * wW], Wi = [end[0] - oW[0] * wW, end[1] - oW[1] * wW];
+        const c1 = [T[0] + s * 1.4, T[1] + (Eo[1] - T[1]) * 0.45], c2 = [P[0] + s * 0.6, P[1] + (Ei[1] - P[1]) * 0.5];
+        const f = p => `${r1(p[0])},${r1(p[1])}`;
+        const inner = [P[0] - s * 3.2, (P[1] + T[1]) / 2];
+        const d = `M ${f(T)} Q ${f(c1)} ${f(Eo)} L ${f(Wo)} L ${f(Wi)} L ${f(Ei)} Q ${f(c2)} ${f(P)} L ${f(inner)} Z`;
+        return { d, end, endL: Wo, endR: Wi, dir: uFore };
       };
       // 소매 끝 밴드(시보리·커프스): 소매 끝에서 len cm만큼
       const cuffBand = (sl, len, it, fill) => {
@@ -1127,9 +1142,13 @@
       const back = [], body = [], front = [], labels = [];
 
       // 머리·목·손
+      [-1, 1].forEach(s => back.push(`<ellipse cx="${s * 7.6}" cy="12" rx="1.3" ry="2.4" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`));
       back.push(`<ellipse cx="0" cy="11" rx="7.6" ry="10.2" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`);
+      // 짧은 남성 헤어 (옆머리는 귀 위로 짧게, 앞머리는 이마에 살짝)
+      back.push(`<path d="M -7.9,11 Q -8.6,3.4 -5.4,0.6 Q -1.2,-1.8 3.6,-0.6 Q 8.4,0.8 8.1,8 L 7.9,11 Q 7.4,7.2 6.2,5.6 Q 3.6,6.6 0.4,5.2 Q -2.6,6.4 -5.2,5.8 Q -7,7.2 -7.9,11 Z" fill="#1c1c1e" stroke="#0b0b0c" stroke-width="0.3"/>`);
+      back.push(`<path d="M -5,3 Q -1,1.4 3.4,2.6 M -3.4,1.8 Q 0.4,0.6 5,2.4" fill="none" stroke="#3a3a3e" stroke-width="0.35" stroke-linecap="round"/>`);
       back.push(`<path d="M -3.8,18.5 L -4.3,29 Q 0,31 4.3,29 L 3.8,18.5 Z" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`);
-      [-1, 1].forEach(s => { const A = ARM(s); const cy = A[2][1] + 4.6; back.push(`<ellipse cx="${r1(A[2][0] + s * 0.4)}" cy="${r1(cy)}" rx="2.4" ry="4.1" transform="rotate(${s * -6} ${r1(A[2][0])} ${r1(cy)})" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`); });
+      [-1, 1].forEach(s => { const A = ARM(s); const cy = A[2][1] + 4.4; back.push(`<ellipse cx="${r1(A[2][0] + s * 0.4)}" cy="${r1(cy)}" rx="2.4" ry="4.1" transform="rotate(${s * -6} ${r1(A[2][0])} ${r1(cy)})" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`); });
 
       // ----- 바지 (릴렉스 스트레이트 치노 / 데님) -----
       const pantsD = `M -18.6,${WAIST} L 18.6,${WAIST} Q 20.8,80 21,90 Q 20.4,128 18.4,${HEM_Y} L 3.6,${HEM_Y} Q 3.9,128 1,96 Q 0,94.6 -1,96 Q -3.9,128 -3.6,${HEM_Y} L -18.4,${HEM_Y} Q -20.4,128 -21,90 Q -20.8,80 -18.6,${WAIST} Z`;
@@ -1150,12 +1169,12 @@
       // ----- 셔츠 (버튼다운 옥스포드) -----
       const shirtParts = [], shirtTop = [];
       if (shirtOn) {
-        const w = fit(19.5), hemY = tucked ? WAIST + 3.5 : len(shirt, 'shirt');
+        const w = fit(19.5), hemY = tucked ? WAIST + 3.5 : len(shirt, 'shirt') - SHIRT_TAIL;   // 빼입으면 앞 밑단(뒤 기장보다 짧음)까지
         const sides = tucked
           ? `L -${w},41 Q -${w - 0.8},58 -${w + 0.6},${WAIST + 1} L -${w + 0.6},${hemY} L ${w + 0.6},${hemY} L ${w + 0.6},${WAIST + 1} Q ${w - 0.8},58 ${w},41`
           : `L -${w},41 Q -${w - 1.2},58 -${w - 0.6},${WAIST} L -${w - 0.2},${hemY - 4.5} Q -${w * 0.45},${hemY + 0.6} 0,${hemY} Q ${w * 0.45},${hemY + 0.6} ${w - 0.2},${hemY - 4.5} L ${w - 0.6},${WAIST} Q ${w - 1.2},58 ${w},41`;
         const bodyD = `M -6.4,27.6 L -21.4,31.3 ${sides} L 21.4,31.3 L 6.4,27.6 Q 0,30.4 -6.4,27.6 Z`;
-        const shirtSleeves = [-1, 1].map(s => sleevePath(s, 0, 1.2, 4.8, 3.4));
+        const shirtSleeves = [-1, 1].map(s => sleevePath(s, [s * 21.4, 31.3], [s * w, 41], 4.4, 3.3, 1.2));
         if (!sweatOn && !(outerOn && style !== 'vest')) shirtSleeves.forEach(sl => shirtParts.push(piece(sl.d, shirt)));
         if (!sweatOn) {
           shirtParts.push(piece(bodyD, shirt));
@@ -1163,7 +1182,7 @@
           shirtParts.push(seam(`M -1.2,30 L -1.2,${hemY - 0.5}`, shirt, 0.22));
           for (let y = 36; y < Math.min(hemY - 3, tucked ? WAIST : 200); y += 8.5) shirtParts.push(`<circle cx="-0.3" cy="${y}" r="0.55" fill="${lineOf(shirt.hex)}"/>`);
           shirtParts.push(seam(`M -14.5,42 L -9,42 L -9,48.5 L -14.5,48.5 Z`, shirt, 0.22));   // 가슴 포켓
-        } else if (!tucked && hemY > len(sweat, 'sweat')) {
+        } else if (!tucked && hemY > len(sweat, 'sweat') - 0.5) {
           shirtParts.push(piece(bodyD, shirt));   // 스웨트 아래로 보이는 셔츠 밑단
         }
         // 커프스는 나중에 맨 앞에 그린다
@@ -1175,11 +1194,13 @@
       let sweatHem = null;
       if (sweatOn) {
         const w = fit(22.5), hemY = len(sweat, 'sweat'); sweatHem = hemY;
-        const bodyD = `M -7.4,27.5 Q -16,28 -26,35 Q -${w + 0.4},40 -${w},46 L -${w},${hemY - 5} L -${w - 1.4},${hemY} L ${w - 1.4},${hemY} L ${w},${hemY - 5} L ${w},46 Q ${w + 0.4},40 26,35 Q 16,28 7.4,27.5 Q 0,31.8 -7.4,27.5 Z`;
+        const underJacket = outerOn && style !== 'vest' && style !== 'blouson';
+        const shX = underJacket ? 21.5 : 26, shY = underJacket ? 32 : 35;   // 구조적 아우터 안에서는 드롭숄더가 아우터 어깨 안으로 들어간다
+        const bodyD = `M -7.4,27.5 Q -16,28 -${shX},${shY} Q -${w + 0.4},40 -${w},46 L -${w},${hemY - 5} L -${w - 1.4},${hemY} L ${w - 1.4},${hemY} L ${w},${hemY - 5} L ${w},46 Q ${w + 0.4},40 ${shX},${shY} Q 16,28 7.4,27.5 Q 0,31.8 -7.4,27.5 Z`;
         const sweatSleeves = [];
         if (!(outerOn && style !== 'vest')) {
           [-1, 1].forEach(s => {
-            const sl = sleevePath(s, 0.16, 0.2, 6.6, 4.1);
+            const sl = sleevePath(s, [s * 26, 35], [s * w, 46], 5.6, 4.1, 0.2);
             sweatSleeves.push(piece(sl.d, sweat));
             sweatSleeves.push(cuffBand(sl, 4.5, sweat, detailOf(sweat.hex)));
             const A = ARM(s); sweatSleeves.push(seam(`M ${r1(A[2][0] - s * 3.8)},${r1(A[2][1] - 9)} q ${s * 2},1.2 ${s * 4},0.3`, sweat, 0.2));   // 소매 주름
@@ -1190,7 +1211,7 @@
         sweatParts.push(`<path d="M -${w},${hemY - 5} L ${w},${hemY - 5} L ${w - 1.4},${hemY} L -${w - 1.4},${hemY} Z" fill="${detailOf(sweat.hex)}" stroke="${lineOf(sweat.hex)}" stroke-width="0.3"/>`);
         for (let x = -w + 1.2; x < w - 1; x += 1.3) sweatParts.push(seam(`M ${r1(x)},${hemY - 4.6} L ${r1(x * 0.97)},${hemY - 0.4}`, sweat, 0.12));
         sweatParts.push(`<path d="M -7.4,27.5 Q 0,31.8 7.4,27.5 Q 7.9,29.6 7.3,30.4 Q 0,34.4 -7.3,30.4 Q -7.9,29.6 -7.4,27.5 Z" fill="${detailOf(sweat.hex)}" stroke="${lineOf(sweat.hex)}" stroke-width="0.3"/>`);
-        [-1, 1].forEach(s => sweatParts.push(seam(`M ${s * 26},35 Q ${s * 24},41 ${s * w},46`, sweat, 0.25)));
+        [-1, 1].forEach(s => sweatParts.push(seam(`M ${s * shX},${shY} Q ${s * (shX - 2)},41 ${s * w},46`, sweat, 0.25)));
         labels.push({ y: hemY, text: `스웨트${sweat.len ? ' ' + cm(sweat.len) : ''}` });
       }
 
@@ -1211,7 +1232,7 @@
             const py = Math.min(hemY - 14, 82);
             outerParts.push(piece(`M ${s * 10.5},${py} L ${s * 18.2},${py - 0.2} L ${s * 18.4},${py + 3.2} L ${s * 10.7},${py + 3.4} Z`, o, { sw: 0.28, noShade: true }));
             // 소매 (몸판 뒤에 깔리도록 앞쪽에 넣는다)
-            const sl = sleevePath(s, 0, -0.4, sweatOn ? 6.6 : 5.2, sweatOn ? 4.6 : 3.9);
+            const sl = sleevePath(s, [s * 22.8, 30.6], [s * (w + 0.2), 41], sweatOn ? 5.8 : 4.6, sweatOn ? 4.5 : 3.8, -0.4);
             outerParts.unshift(piece(sl.d, o));
             [1.8, 3.2].forEach(k => { const [ux, uy] = sl.dir; outerTop.push(`<circle cx="${r1(sl.end[0] - ux * k + s * (sweatOn ? 3 : 2.4))}" cy="${r1(sl.end[1] - uy * k)}" r="0.5" fill="${lineOf(o.hex)}"/>`); });
           });
@@ -1236,7 +1257,7 @@
             outerParts.push(piece(`M ${s * 5.6},30.6 L ${s * 5.9},26.4 Q ${s * 8.4},25.9 ${s * 10.6},27.4 L ${s * 11.2},30.2 Q ${s * 8.6},29 ${s * 5.6},30.6 Z`, o, { fill: detailOf(o.hex), sw: 0.3, noShade: true }));
             if (!isVest) {
               outerParts.push(`<path d="M ${s * w},${hemY - bandH} L ${s * frontX1},${hemY - bandH} L ${s * frontX1},${hemY} L ${s * (w - 2)},${hemY} Z" fill="${detailOf(o.hex)}" stroke="${lineOf(o.hex)}" stroke-width="0.3"/>`);
-              const sl = sleevePath(s, 0.17, -0.2, 7.4, 5.2);
+              const sl = sleevePath(s, [s * 27.2, 34.2], [s * w, 46], 6.6, 5.1, -0.2);
               outerParts.unshift(piece(sl.d, o) + cuffBand(sl, 3.8, o, detailOf(o.hex)));
             } else {
               outerParts.push(`<path d="M ${s * w},${hemY} L ${s * frontX1},${hemY} L ${s * frontX1},${hemY - bandH} L ${s * w},${hemY - bandH} Z" fill="${detailOf(o.hex)}" stroke="${lineOf(o.hex)}" stroke-width="0.25"/>`);
@@ -1256,7 +1277,7 @@
           const sleeveCovered = sweatOn || (outerOn && style !== 'vest');
           topParts.push(cuffBand(cuff, sleeveCovered ? 2.2 : 4.2, shirt, cf));
         });
-        if (!tucked) labels.push({ y: len(shirt, 'shirt'), text: `셔츠${shirt.len ? ' ' + cm(shirt.len) : ''}` });
+        if (!tucked) labels.push({ y: len(shirt, 'shirt') - SHIRT_TAIL, text: shirt.len ? `셔츠 ${cm(shirt.len)} (앞 약 ${cm(shirt.len - SHIRT_TAIL)})` : '셔츠' });
       }
 
       // 그리는 순서: 손·머리 → (넣어 입은 셔츠) → 바지 → (빼 입은 셔츠) → 스웨트 → 아우터 → 칼라·커프스 → 단추
@@ -1273,9 +1294,9 @@
                `<text x="44" y="${r1(ty + 1.2)}" font-size="3.5" fill="#475569" font-family="Pretendard,-apple-system,sans-serif">${l.text}</text>`;
       }).join('');
 
-      return `<svg viewBox="-36 -2 118 176" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="착용 모습 일러스트" style="width:100%;max-width:320px;display:block;margin:0 auto">` +
+      return `<svg viewBox="-36 -2 126 176" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="착용 모습 일러스트" style="width:100%;max-width:320px;display:block;margin:0 auto">` +
              `<defs>${defs.join('')}</defs>` +
-             `<rect x="-36" y="-2" width="118" height="176" rx="4" fill="#f8fafc"/>` +
+             `<rect x="-36" y="-2" width="126" height="176" rx="4" fill="#f8fafc"/>` +
              `<ellipse cx="0" cy="${HEM_Y + 5.6}" rx="26" ry="2" fill="#0f172a" opacity=".06"/>` +
              order.join('') + lab + `</svg>`;
     }
