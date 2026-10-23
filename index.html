@@ -65,6 +65,7 @@
         <div class="text-2xl font-black leading-none text-amber-400"><span id="totalScore">--</span><span class="text-xs font-normal text-slate-400">점</span></div>
       </div>
     </div>
+    <div id="wearStrip" class="mt-2 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 text-xs min-w-0"></div>
   </header>
 
   <!-- 메인 슬롯 선택 영역 -->
@@ -203,6 +204,7 @@
       // 아우터
       { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', pattern: 'solid' },
       { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', pattern: 'solid' },
+      { id: 'outer_blouson09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 쇼트 블루종', desc: '경량 패딩 블루종 / 블랙', hex: '#111827', style: 'blouson', pattern: 'solid' },
       { id: 'outer_vest09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 컴팩트 베스트', desc: '경량 패딩 베스트 / 블랙', hex: '#111827', style: 'vest', pattern: 'solid' },
 
       // 오버사이즈 스웨트셔츠
@@ -381,6 +383,35 @@
     const isBrownFamily = i => i.tone === 'earth' && i.hue < 75;
     const isMutedTeal = i => i.tone === 'blue' && i.hue >= 200 && i.hue <= 260 && i.lightness <= 45 && i.chroma <= 18;
     const isDenim = i => i.tone === 'blue' && /진|데님|denim|jean/i.test(`${i.name} ${i.desc} ${i.code}`);
+
+    // 넣어 입기 / 빼입기 가이드: 아우터 종류와 착용 방식으로 판정
+    function getWearGuide(outer, sweat, shirt, mode) {
+      const style = outer.none ? 'none' : (outer.style || 'jacket');
+      const structured = style === 'blazer' || style === 'coat';
+      if (mode === 'shirt_only') {
+        if (structured) {
+          return { target: '셔츠', action: '넣어 입기', icon: '👔', short: '구조적 아우터 안은 깔끔하게',
+            reason: `${outer.name} 안에서 셔츠 밑단이 삐져나오면 아우터의 라인이 무너집니다. 바지 안에 넣고 가죽 벨트로 허리선을 잡아주세요.` };
+        }
+        if (style === 'none') {
+          return { target: '셔츠', action: '빼입기', icon: '👕', short: '앞만 1~2cm 살짝 넣기',
+            reason: `아우터가 없을 때는 셔츠를 빼입는 편이 자연스럽습니다. 맨 위 단추 1개를 풀고 소매를 팔꿈치 아래까지 걷어 올린 뒤, 앞쪽만 1~2cm 살짝 넣으면 다리가 길어 보입니다.` };
+        }
+        return { target: '셔츠', action: '넣어 입기', icon: '👔', short: '아우터 기장이 짧아 밑단이 튀어나옴',
+          reason: `${outer.name}은 기장이 짧아서 셔츠를 빼입으면 밑단이 아우터 밖으로 길게 나와 하체 비율이 짧아 보입니다. 바지 안에 넣어 입거나, 최소한 앞쪽만 넣으세요.` };
+      }
+      if (mode === 'layered') {
+        const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
+        const hem = bridge
+          ? '셔츠 밑단이 스웨트 아래로 2cm 정도 보이게 하면 상·하의를 끊어주는 브릿지가 됩니다.'
+          : '셔츠 밑단은 스웨트 아래로 1cm 이내만 보이게 정리하세요. 색 대비가 약해 많이 빼도 효과가 없습니다.';
+        const tail = structured ? ` 다만 ${outer.name} 밑단 밖으로는 나오지 않게 앞쪽을 정리하세요.` : '';
+        return { target: '셔츠', action: '빼입기', icon: '👕', short: bridge ? '스웨트 밑단 아래로 2cm 노출' : '밑단 1cm 이내로 정리',
+          reason: `스웨트 안의 셔츠는 바지에 넣지 않습니다. 두 겹이 허리에 몰려 부해 보이기 때문입니다. ${hem}${tail}` };
+      }
+      return { target: '스웨트', action: '빼입기', icon: '👕', short: '시보리를 골반에 걸치기',
+        reason: `오버사이즈 스웨트는 바지에 넣지 않고 밑단 시보리를 골반에 살짝 걸쳐 입습니다. 넣으면 볼륨이 허리에 뭉쳐 비율이 무너집니다.` };
+    }
 
     // 핵심 학습형 채점 엔진
     function evaluateOutfit(outer, sweat, shirt, bottom) {
@@ -564,27 +595,27 @@
         } else if (darkMerge) {
           colorScore -= 5;
           classicTrendLesson = `<b>[어두운 아우터 + 어두운 이너 (-5점)]</b> 둘 다 어두워 아우터의 입체감이 사라집니다.`;
-        } else if (mainTop.lightness <= 40) {
+        } else if (outerGap >= 45) {
           silhouetteScore += 7;
           tags.push('#숏블루종실루엣');
-          classicTrendLesson = `<b>[크롭 아우터 + 딥 톤 이너 (+7점)]</b> 짧은 ${outer.name}이 허리선을 높이고, 어두운 이너가 상체를 잡아주며 ${bottom.name}가 일자로 떨어져 비율이 길어 보입니다. 2026 F/W의 유틸리티·블루종 흐름에 맞습니다.`;
+          classicTrendLesson = `<b>[크롭 아우터 + 대비되는 이너 (+7점)]</b> 짧은 ${outer.name}(명도 ${outer.lightness})이 허리선을 높이고, 명도 ${mainTop.lightness}의 ${mainTop.name}가 뚜렷하게 대비되어 ${bottom.name}가 일자로 떨어지는 비율이 길어 보입니다. 2026 F/W의 유틸리티·블루종 흐름에 맞습니다.`;
         } else {
           silhouetteScore += 3;
           tags.push('#숏블루종실루엣');
-          classicTrendLesson = `<b>[크롭 아우터 (+3점)]</b> 비율 자체는 좋지만 이너도 밝아서 아우터와 이너의 대비가 약합니다. 이너를 한 톤 어둡게 가면 더 좋아집니다.`;
+          classicTrendLesson = `<b>[크롭 아우터 (+3점)]</b> 비율 자체는 좋지만 아우터와 이너의 명도 차이가 ${outerGap}포인트로 약합니다. ${outer.lightness >= 50 ? '이너를 한 톤 어둡게' : '이너를 한 톤 밝게'} 가면 더 좋아집니다.`;
         }
       } else if (style === 'vest') {
         // 소매 없는 경량 패딩: 이너의 소매·칼라가 그대로 보이므로 이너와의 명도 대비가 핵심
         if (sameBlock || darkMerge) {
           colorScore -= 6;
           classicTrendLesson = `<b>[베스트와 이너의 색 겹침 (-6점)]</b> ${outer.name}과 ${mainTop.name}의 명도가 비슷해 베스트의 윤곽이 이너에 묻힙니다. 소매가 그대로 보이는 아우터라서 이너를 밝게 가야 구조가 읽힙니다.`;
-        } else if (mainTop.lightness >= 60) {
+        } else if (outerGap >= 50) {
           silhouetteScore += 6;
           tags.push('#스포티프레피');
-          classicTrendLesson = `<b>[경량 베스트 + 밝은 이너 (+6점)]</b> 어두운 ${outer.name} 아래로 밝은 ${mainTop.name}의 소매와 밑단이 드러나 몸통과 팔이 또렷하게 분리됩니다. 2026 F/W의 퍼퍼 복귀와 스포티 프레피 흐름에 맞는 구성입니다.`;
+          classicTrendLesson = `<b>[경량 베스트 + 대비되는 이너 (+6점)]</b> ${outer.name}(명도 ${outer.lightness}) 옆으로 명도 ${mainTop.lightness}의 ${mainTop.name} 소매와 밑단이 드러나 몸통과 팔이 또렷하게 분리됩니다. 2026 F/W의 퍼퍼 복귀와 스포티 프레피 흐름에 맞는 구성입니다.`;
         } else {
           silhouetteScore += 3;
-          classicTrendLesson = `<b>[경량 베스트 (+3점)]</b> 충돌은 없지만 이너가 어두워 베스트와의 대비가 약합니다. 밝은 이너로 바꾸면 한 단계 올라갑니다.`;
+          classicTrendLesson = `<b>[경량 베스트 (+3점)]</b> 충돌은 없지만 베스트와 이너의 명도 차이가 ${outerGap}포인트로 약합니다. ${outer.lightness >= 50 ? '이너를 어둡게' : '이너를 밝게'} 바꾸면 한 단계 올라갑니다.`;
         }
       } else if (style === 'jacket') {
         if (sameBlock || darkMerge) {
@@ -614,14 +645,14 @@
         if (style === 'vest') {
           stylingTip = `📌 <b>착용 디테일:</b> 베스트는 지퍼를 끝까지 올리기보다 가슴 아래까지만 잠가 이너의 칼라와 셔츠 밑단이 보이게 하세요. 소매가 드러나므로 소매를 한 번 걷어 올리면 균형이 맞습니다.`;
         } else if (style === 'blazer' || style === 'coat') {
-          stylingTip = `📌 <b>착용 디테일:</b> 구조적인 아우터를 입을 때는 셔츠를 바지 안에 깔끔하게 <b>넣어 입기(Tuck-in)</b> 하고, 갈색이나 블랙 가죽 벨트를 채워주면 완벽합니다.`;
+          stylingTip = `📌 <b>착용 디테일:</b> 갈색이나 블랙 가죽 벨트를 채우고, 셔츠 소매 끝이 아우터 소매 밖으로 1cm 보이게 하세요.`;
         } else {
-          stylingTip = `📌 <b>착용 디테일:</b> 셔츠 단독 착용 시 맨 위 단추 1개는 풀고, 소매를 팔꿈치 아래까지 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
+          stylingTip = `📌 <b>착용 디테일:</b> 소매를 팔꿈치 아래까지 두 번 걷어 올리면(Roll-up) 여유로운 남성미가 살아납니다.`;
         }
       } else if (mode === 'layered') {
         stylingTip = `📌 <b>착용 디테일:</b> 옥스포드 셔츠의 카라 끝 단추(버튼다운)를 반드시 잠가야 스웨트 목선 안에서 깃이 무너지지 않고 아치형(Roll)을 유지합니다. 소매 끝으로 셔츠 커프스를 1cm 빼주세요.`;
       } else {
-        stylingTip = `📌 <b>착용 디테일:</b> 스웨트 단독 착용 시 스웨트 밑단 시보리를 골반에 살짝 걸쳐 자연스럽게 주름지게 연출하세요.`;
+        stylingTip = `📌 <b>착용 디테일:</b> 소매를 한 번 밀어 올려 손목을 드러내면 오버사이즈 볼륨이 가벼워 보입니다.`;
       }
 
       // 점수 보정
@@ -642,7 +673,8 @@
       return {
         total, colorScore, layerScore, silhouetteScore,
         grade, mood, modeLabel, tags,
-        colorLesson, layerLesson, classicTrendLesson, stylingTip
+        colorLesson, layerLesson, classicTrendLesson, stylingTip,
+        wear: getWearGuide(outer, sweat, shirt, mode)
       };
     }
     // ==== PURE LOGIC END ====
@@ -797,7 +829,16 @@
         `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-extrabold">${t}</span>`
       ).join('');
 
+      document.getElementById('wearStrip').innerHTML = `
+        <span class="flex-shrink-0">${res.wear.icon}</span>
+        <span class="font-black text-slate-900 whitespace-nowrap">${res.wear.target} ${res.wear.action}</span>
+        <span class="text-slate-500 truncate">${res.wear.short}</span>`;
+
       document.getElementById('learningCards').innerHTML = `
+        <div class="p-3 rounded-xl bg-slate-900 text-white">
+          <div class="font-extrabold text-amber-300 mb-1">${res.wear.icon} 착용법: ${res.wear.target} ${res.wear.action}</div>
+          <p class="text-slate-200">${res.wear.reason}</p>
+        </div>
         <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 text-slate-800">
           <div class="font-extrabold text-indigo-900 mb-1">🎨 1. 색채 & 명도 원리</div>
           <p>${res.colorLesson}</p>
