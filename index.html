@@ -190,34 +190,34 @@
   <script>
     const DEFAULT_ITEMS = [
       // 아우터
-      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 안 입음', desc: '실내 / 봄·가을 단품', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 중공섬유', hex: '#dfd5c6', tone: 'earth', lightness: 84, temp: 'warm', pattern: 'solid' },
+      { id: 'outer_none', category: 'outer', code: 'NONE', name: '아우터 없음', desc: '실내 / 단품 레이어드', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
+      { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', tone: 'earth', lightness: 84, temp: 'warm', pattern: 'solid' },
       { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', tone: 'navy', lightness: 16, temp: 'cool', pattern: 'solid' },
 
       // 오버사이즈 스웨트셔츠 (안 입음 포함)
       { id: 'sweat_none', category: 'sweat', code: 'NONE', name: '❌ 스웨트 안 입음', desc: '옥스포드 셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '멜란지 라이트 그레이', desc: '가장 밝고 캐주얼한 회색', hex: '#d1d5db', tone: 'mono', lightness: 82, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색에 가까운 짙은 쥐색', hex: '#374151', tone: 'mono', lightness: 26, temp: 'cool', pattern: 'solid' },
-      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명하고 단단한 무채색', hex: '#111827', tone: 'mono', lightness: 10, temp: 'neutral', pattern: 'solid' },
-      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '라이트 크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', tone: 'earth', lightness: 86, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 에스프레소 밤색', hex: '#3b2820', tone: 'earth', lightness: 18, temp: 'warm', pattern: 'solid' },
-      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 감도는 뮤트 블루', hex: '#3b5968', tone: 'blue', lightness: 35, temp: 'cool', pattern: 'solid' },
+      { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', tone: 'mono', lightness: 82, temp: 'neutral', pattern: 'solid' },
+      { id: 'sweat_08', category: 'sweat', code: '08 DARK GRAY', name: '차콜 그레이', desc: '먹색 짙은 쥐색', hex: '#374151', tone: 'mono', lightness: 26, temp: 'cool', pattern: 'solid' },
+      { id: 'sweat_09', category: 'sweat', code: '09 BLACK', name: '쌩 블랙', desc: '선명한 무채색 블랙', hex: '#111827', tone: 'mono', lightness: 10, temp: 'neutral', pattern: 'solid' },
+      { id: 'sweat_31', category: 'sweat', code: '31 BEIGE', name: '크림 베이지', desc: '오트밀 밝은 어스톤', hex: '#e5dec9', tone: 'earth', lightness: 86, temp: 'warm', pattern: 'solid' },
+      { id: 'sweat_39', category: 'sweat', code: '39 DARK BROWN', name: '딥 다크 브라운', desc: '깊은 밤색', hex: '#3b2820', tone: 'earth', lightness: 18, temp: 'warm', pattern: 'solid' },
+      { id: 'sweat_66', category: 'sweat', code: '66 BLUE', name: '틸 블루', desc: '청록빛 뮤트 블루', hex: '#3b5968', tone: 'blue', lightness: 35, temp: 'cool', pattern: 'solid' },
 
       // 옥스포드 셔츠 (안 입음 포함)
       { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용', hex: '#f8fafc', tone: 'none', lightness: 95, temp: 'neutral', pattern: 'none' },
-      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '자연스러운 크림 도화지', hex: '#f8f6f0', tone: 'mono', lightness: 96, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 단색 중간 회색', hex: '#9ca3af', tone: 'mono', lightness: 64, temp: 'neutral', pattern: 'solid' },
-      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '솔리드 라이트 그린', desc: '파스텔 세이지 연둣빛', hex: '#dce5d5', tone: 'earth', lightness: 87, temp: 'warm', pattern: 'solid' },
-      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 파란색', hex: '#93c5fd', tone: 'blue', lightness: 78, temp: 'cool', pattern: 'solid' },
+      { id: 'shirt_01', category: 'shirt', code: '01 OFF WHITE', name: '오프 화이트', desc: '크림 화이트 도화지', hex: '#f8f6f0', tone: 'mono', lightness: 96, temp: 'warm', pattern: 'solid' },
+      { id: 'shirt_06', category: 'shirt', code: '06 GRAY', name: '솔리드 그레이', desc: '차분한 중간 회색', hex: '#9ca3af', tone: 'mono', lightness: 64, temp: 'neutral', pattern: 'solid' },
+      { id: 'shirt_50', category: 'shirt', code: '50 LIGHT GREEN', name: '라이트 그린', desc: '파스텔 세이지 그린', hex: '#dce5d5', tone: 'earth', lightness: 87, temp: 'warm', pattern: 'solid' },
+      { id: 'shirt_64', category: 'shirt', code: '64 BLUE', name: '삭스 블루', desc: '화사한 고명도 블루', hex: '#93c5fd', tone: 'blue', lightness: 78, temp: 'cool', pattern: 'solid' },
       { id: 'shirt_69', category: 'shirt', code: '69 NAVY', name: '딥 네이비', desc: '깊게 가라앉은 짙은 남색', hex: '#1e293b', tone: 'navy', lightness: 17, temp: 'cool', pattern: 'solid' },
       { id: 'shirt_07', category: 'shirt', code: '07 GRAY ST', name: '그레이 스트라이프', desc: '연회색 핀 스트라이프', hex: '#cbd5e1', tone: 'mono', lightness: 80, temp: 'neutral', pattern: 'stripe-gray' },
-      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#60a5fa', tone: 'blue', lightness: 75, temp: 'cool', pattern: 'stripe-blue' },
+      { id: 'shirt_65', category: 'shirt', code: '65 BLUE ST', name: '블루 스트라이프', desc: '클래식 블루 스트라이프', hex: '#BDCAED', tone: 'blue', lightness: 83, temp: 'cool', pattern: 'stripe-blue' },
 
       // 하의 (5벌)
       { id: 'bottom_56', category: 'bottom', code: '56 OLIVE', name: '올리브 치노', desc: '범용성 1위 어스톤 (72cm)', hex: '#555b42', tone: 'earth', lightness: 32, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_34', category: 'bottom', code: '34 BROWN', name: '브라운 치노', desc: '황토빛 중간 갈색 (72cm)', hex: '#855836', tone: 'earth', lightness: 40, temp: 'warm', pattern: 'solid' },
+      { id: 'bottom_34', category: 'bottom', code: '34 BROWN', name: '브라운 치노', desc: '황토빛 카멜/탠 브라운 (72cm)', hex: '#D4BD99', tone: 'earth', lightness: 68, temp: 'warm', pattern: 'solid' },
       { id: 'bottom_38', category: 'bottom', code: '38 DARK BROWN', name: '다크 브라운 치노', desc: '에스프레소 밤색 (72cm)', hex: '#382821', tone: 'earth', lightness: 19, temp: 'warm', pattern: 'solid' },
-      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적 차콜 쥐색 (72cm)', hex: '#374151', tone: 'mono', lightness: 25, temp: 'cool', pattern: 'solid' },
+      { id: 'bottom_08', category: 'bottom', code: '08 DARK GRAY', name: '다크 그레이 치노', desc: '도시적인 차콜 쥐색 (72cm)', hex: '#374151', tone: 'mono', lightness: 25, temp: 'cool', pattern: 'solid' },
       { id: 'bottom_65', category: 'bottom', code: '65 MID BLUE', name: '레귤러핏 진 (데님)', desc: '정통 중청 데님 (73cm)', hex: '#3b5980', tone: 'blue', lightness: 38, temp: 'cool', pattern: 'solid' }
     ];
 
@@ -362,7 +362,7 @@
         colorLesson += `<br><br>🖤 <b>2026 F/W 딥 뉴트럴 (+3점):</b> 런웨이를 지배한 차콜·딥 초콜릿 하의를 밝은 상의로 받쳐, 어두운 톤의 무게감과 가벼운 상체 대비를 동시에 얻었습니다.`;
       }
       // 2026: 차가운 뮤트 틸 + 따뜻한 다크 어스
-      if (mainTop.code.includes('66') && (bottom.code.includes('38') || bottom.code.includes('34'))) {
+      if (mainTop.code.includes('66') && bottom.tone === 'earth' && bottom.temp === 'warm' && bottom.lightness <= 45) {
         colorScore += 4;
         tags.push('#2026뮤트컬러');
         colorLesson += `<br><br>✨ <b>2026 [뮤트 틸 블루 + 웜 다크 어스] (+4점):</b> 차가운 상의와 따뜻한 하의의 온도 대비가 고급스럽습니다.`;
