@@ -413,7 +413,9 @@
 
     // =========================================================
     // 채점 기준표 (클래식 공식 + 2026 F/W 런웨이 트렌드)
-    // 기준: 무난한 조합 = 70점대 / 의도가 보이는 조합 = 80점대 / 90+ = 공식과 트렌드가 동시에 맞는 조합
+    // 기준: 무난한 조합 = 70점대 / 클래식 공식을 지킨 조합 = 80점대(A) / 공식 + 2026 트렌드가 함께 맞는 조합 = 89+(S) / 상위 1% = 93+(S+)
+    // 색 판정은 명도만이 아니라 색상(보색)·색차(ΔE)까지 보고, 아우터를 입으면 상체의 주된 색을 아우터로 본다.
+    // 남성복의 뉴트럴(네이비·그레이·화이트·크림·베이지·카키·올리브·브라운·데님)은 '유채색 과다'로 세지 않는다.
     // 트렌드 근거: 2026 F/W 남성복 — 블랙·차콜·딥초콜릿 지배, 슬림·구조적 테일러링 복귀,
     //             1960s 초반 프레피 무드, 니트/스웨트 레이어링, 셔츠 칼라 디테일 강조
     // 모든 규칙은 옷의 번호가 아니라 속성(명도·톤·색상각·패턴·아우터 style)으로 판정합니다.
@@ -422,16 +424,29 @@
     const BODY = { height: 174 };
 
     const SCORE_RULES = {
-      base:   { color: 28, layer: 17, silhouette: 18 },   // 각 영역 기본점 (만점: 40 / 30 / 30)
+      base:   { color: 25, layer: 16, silhouette: 17 },   // 각 영역 기본점 (만점: 40 / 30 / 30)
       limits: { color: [10, 40], layer: [8, 30], silhouette: [8, 30] },
       single: { sweat: 6, shirt: 6, noOuter: 5 },          // 단품 착용 보정: 레이어가 없는 구성이 구조적으로 불리해지지 않게
-      grade:  [[95, 'S+', '디자이너도 고개를 끄덕일 완성형'], [89, 'S', '공식과 트렌드가 모두 맞는 룩'],
-               [81, 'A', '의도가 느껴지는 좋은 코디'], [72, 'B', '무난한 데일리 룩']]  // 72 미만은 C
+      grade:  [[93, 'S+', '디자이너도 고개를 끄덕일 완성형'], [89, 'S', '공식과 트렌드가 모두 맞는 룩'],
+               [81, 'A', '검증된 공식을 지킨 좋은 코디'], [72, 'B', '무난한 데일리 룩']]  // 72 미만은 C
     };
 
     const isOlive = i => i.tone === 'earth' && i.hue >= 90 && i.hue <= 150 && i.lightness <= 45 && i.chroma >= 8;
-    const isBrownFamily = i => i.tone === 'earth' && i.hue < 75;
-    const isMutedTeal = i => i.tone === 'blue' && i.hue >= 200 && i.hue <= 260 && i.lightness <= 45 && i.chroma <= 18;
+    const isCool = i => i.tone === 'blue' || i.tone === 'navy';
+    // 지각 색차(ΔE, CIE76 근사): 명도만이 아니라 색상·채도 차이까지 본다. 그레이 위의 블루 칼라처럼 밝기가 같아도 색으로 분리되는 경우를 잡는다
+    const labOf = i => ({ L: i.lightness, a: i.chroma * Math.cos(i.hue * Math.PI / 180), b: i.chroma * Math.sin(i.hue * Math.PI / 180) });
+    const deltaE = (x, y) => { const p = labOf(x), q = labOf(y); return Math.round(Math.hypot(p.L - q.L, p.a - q.a, p.b - q.b)); };
+    // 상·하의 한 쌍의 대비 판정. 보색(블루·네이비 ↔ 카키·브라운)은 명도가 비슷해도 클래식한 분리로 본다
+    function pairContrast(top, btm) {
+      const d = Math.abs(top.lightness - btm.lightness);
+      if (top.tone === btm.tone && d <= 8) return { kind: 'clash', pts: 0, d };
+      if (d >= 40) return { kind: 'strong', pts: 10, d };
+      if (top.tone === btm.tone && d >= 18) return { kind: 'tonal', pts: 8, d };
+      if ((isCool(top) && btm.tone === 'earth') || (top.tone === 'earth' && isCool(btm))) return { kind: 'complement', pts: 7, d };
+      if (d >= 25) return { kind: 'mid', pts: 6, d };
+      if (top.tone !== btm.tone && d < 15) return { kind: 'flat', pts: 1, d };
+      return { kind: 'plain', pts: 3, d };
+    }
     const isDenim = i => i.tone === 'blue' && /진|데님|denim|jean/i.test(`${i.name} ${i.desc} ${i.code}`);
 
     // 명도 차이를 말로 바꾼다
@@ -532,7 +547,6 @@
       let silhouetteScore = B.silhouette;
 
       const tags = [];
-      let colorLesson = '';
       let layerLesson = '';
       let classicTrendLesson = '';
 
@@ -544,31 +558,45 @@
       // =========================================================
       // 1. 색채학 & 명도 대비 원리 (40점)
       // =========================================================
-      const lightDiff = Math.abs(mainTop.lightness - bottom.lightness);
-
-      if (mainTop.tone === bottom.tone && lightDiff <= 8) {
-        colorScore -= 10;
+      // 상체의 주된 색은 아우터를 입으면 아우터다. 아우터↔하의와 이너↔하의 중 더 잘 분리되는 쪽으로 판정한다.
+      // 이너가 하의와 같은 색이면 앞섶·밑단에서 이어져 보이므로 따로 감점한다.
+      const innerPair = pairContrast(mainTop, bottom);
+      const outerPair = outer.none ? null : pairContrast(outer, bottom);
+      const useOuter = outerPair && outerPair.kind !== 'clash' && outerPair.pts > innerPair.pts;
+      const pair = useOuter ? outerPair : innerPair;
+      const pairTop = useOuter ? outer : mainTop;
+      const topName = useOuter ? outer.short : mainTop.name;
+      const PAIR_TEXT = {
+        strong: p => [`#고명도대비`, `<b>[명도 대비의 정석 (+10점)]</b> ${topName}(명도 ${pairTop.lightness})와 ${bottom.name}(명도 ${bottom.lightness})의 명도 차이가 <b>${p.d}포인트</b>입니다. 상체와 하체가 또렷하게 분리되어 비율이 안정적으로 읽힙니다.`],
+        tonal: p => [`#톤온톤정석`, `<b>[톤온톤 배색 (+8점)]</b> ${topName}와 ${bottom.name}가 같은 계열(${pairTop.tone.toUpperCase()}) 안에서 밝기 차이 <b>${p.d}포인트</b>를 둡니다. 색 수는 절제하면서 깊이감을 내는 고급 배색입니다.`],
+        complement: p => [`#보색대비`, `<b>[블루 ↔ 카키·브라운 보색 (+7점)]</b> ${topName}와 ${bottom.name}는 차가운 블루 계열과 따뜻한 어스 계열의 보색 관계입니다. 블루 셔츠에 카키 치노, 네이비에 브라운처럼 명도가 비슷해도 색으로 분리되는 클래식 공식입니다.`],
+        mid: p => [`#중간명도대비`, `<b>[명확한 명도 분리 (+6점)]</b> ${topName}와 ${bottom.name}의 명도 차이가 ${p.d}포인트로 충분히 구분됩니다.`],
+        flat: p => [`#톤인톤배색`, `<b>[명도가 비슷한 톤인톤 (+1점)]</b> ${topName}와 ${bottom.name}의 밝기가 비슷하고 색으로도 분리되지 않아 가라앉은 인상입니다. 밝은 셔츠 칼라나 대비되는 아우터로 분리를 만들어 주세요.`],
+        plain: p => [null, `<b>[무난한 중명도 밸런스 (+3점)]</b> ${topName}와 ${bottom.name}가 충돌 없이 연결되지만, 대비가 약해 인상이 평범합니다.`]
+      };
+      let colorLesson = '';
+      if (innerPair.kind === 'clash') {
+        const pen = outer.none ? 6 : 4;
+        colorScore -= pen;
         tags.push('#톤겹침주의');
-        colorLesson = `<b>[동일 색상 충돌 (-10점)]</b> 주 상의(${mainTop.name}, 명도 ${mainTop.lightness})와 하의(${bottom.name}, 명도 ${bottom.lightness})가 사실상 같은 색입니다. 상·하의 경계가 사라져 '한 벌 작업복'처럼 보입니다.`;
-      } else if (lightDiff >= 40) {
-        colorScore += 10;
-        tags.push('#고명도대비');
-        colorLesson = `<b>[명도 대비의 정석 (+10점)]</b> 상의(명도 ${mainTop.lightness})와 하의(명도 ${bottom.lightness})의 명도 차이가 <b>${lightDiff}포인트</b>입니다. 상체는 가볍고 하체는 묵직해 시선이 안정적으로 분리됩니다.`;
-      } else if (mainTop.tone === bottom.tone && lightDiff >= 18) {
-        colorScore += 8;
-        tags.push('#톤온톤정석');
-        colorLesson = `<b>[톤온톤 배색 (+8점)]</b> 같은 계열(${mainTop.tone.toUpperCase()}) 안에서 밝기 차이를 <b>${lightDiff}포인트</b>로 벌렸습니다. 색 수는 절제하면서 깊이감을 내는 고급 배색입니다.`;
-      } else if (lightDiff >= 25) {
-        colorScore += 6;
-        tags.push('#중간명도대비');
-        colorLesson = `<b>[명확한 명도 분리 (+6점)]</b> 상·하의 명도 차이가 ${lightDiff}포인트로 충분히 구분되며, 색이 서로를 해치지 않고 이어집니다.`;
-      } else if (mainTop.tone !== bottom.tone && lightDiff < 15) {
-        colorScore += 1;
-        tags.push('#톤인톤배색');
-        colorLesson = `<b>[명도가 비슷한 톤인톤 (+1점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})의 밝기가 비슷해 가라앉은 인상입니다. 흰색·하늘색 셔츠 깃이나 밑단으로 밝은 브릿지를 넣어야 살아납니다.`;
+        colorLesson = `<b>[이너와 하의가 같은 색 (-${pen}점)]</b> ${mainTop.name}(명도 ${mainTop.lightness})와 ${bottom.name}(명도 ${bottom.lightness})가 사실상 같은 색이라 경계가 사라져 한 벌처럼 보입니다. 2026 F/W의 톤온톤은 명도나 소재 차이로 층을 만든 룩이라 같은 색을 그대로 맞추는 것과는 다릅니다.`;
+        if (outerPair && outerPair.kind !== 'clash') {
+          colorScore += outerPair.pts;
+          const [tag, text] = PAIR_TEXT[outerPair.kind](outerPair);
+          if (tag) tags.push(tag);
+          colorLesson += `<br><br>다만 ${outer.short}가 하의와 분리를 만들어 줍니다. ${text.replace(topName, outer.short)}`;
+        }
       } else {
-        colorScore += 3;
-        colorLesson = `<b>[무난한 중명도 밸런스 (+3점)]</b> 상의(${mainTop.name})와 하의(${bottom.name})가 충돌 없이 연결되지만, 대비가 약해 인상이 평범합니다.`;
+        colorScore += pair.pts;
+        const [tag, text] = PAIR_TEXT[pair.kind](pair);
+        if (tag) tags.push(tag);
+        colorLesson = text;
+        if (useOuter) colorLesson += ` 상체의 주된 색인 아우터 기준으로 판정했습니다(이너 기준이면 ${innerPair.pts >= 0 ? '+' : ''}${innerPair.pts}점).`;
+      }
+      if (outerPair && outerPair.kind === 'clash') {
+        colorScore -= 4;
+        tags.push('#셋업착시');
+        colorLesson += `<br><br>⚠️ <b>아우터와 하의가 같은 색 (-4점):</b> ${outer.short}와 ${bottom.name}가 같은 색이라 셋업처럼 보이지만 소재가 달라 어긋나 보입니다.`;
       }
 
       // 명도 3단계(밝음/중간/어두움) 구성: 디자이너가 가장 먼저 보는 입체감
@@ -579,12 +607,23 @@
         colorLesson += `<br><br>🎚️ <b>명도 3단 구성 (+4점):</b> 밝음·중간·어두움이 모두 들어가 평면적이지 않고 입체감이 생깁니다.`;
       }
 
-      // 유채색(어스·블루·포인트) 계열이 3벌 이상 섞이면 감점 (무채색·네이비는 제외)
-      const chromatic = visible.filter(i => ['earth', 'blue', 'accent'].includes(i.tone));
-      if (new Set(chromatic.map(i => i.tone)).size >= 2 && chromatic.length >= 3) {
+      // 밝은 뉴트럴 톤온톤(윈터 화이트): 크림·화이트·베이지·라이트 그레이만으로 맞춘 룩은 대비가 아니라 톤의 통일로 완성된다
+      const lightNeutral = i => i.lightness >= 70 && ['mono', 'earth'].includes(i.tone) && i.chroma < 25;
+      if (visible.length >= 2 && visible.every(lightNeutral)) {
+        colorScore += 5;
+        tags.push('#윈터화이트톤');
+        colorLesson += `<br><br>🤍 <b>밝은 뉴트럴 톤온톤 (+5점):</b> 크림·화이트·베이지 계열만으로 맞춘 '윈터 화이트' 룩입니다. 대비가 아니라 톤의 통일로 완성되며, 2026 F/W에도 크리미한 윈터 화이트가 등장했습니다. 원단 질감(스웨트의 기모, 옥스포드의 조직감)이 서로 달라야 밋밋하지 않습니다.`;
+      }
+
+      // 포인트 컬러 과다: 남성복에서 네이비·그레이·화이트·크림·베이지·카키·올리브·브라운·데님은 뉴트럴로 본다.
+      // 채도가 높은 '포인트 컬러'가 서로 다른 색상으로 2벌 이상 섞일 때만 산만하다고 판정한다
+      const isAccentColor = i => i.tone === 'accent' || (i.chroma >= 28 && !isDenim(i));
+      const accents = visible.filter(isAccentColor);
+      const hueSpread = accents.length >= 2 ? Math.max(...accents.map(x => Math.min(...accents.map(y => { const d = Math.abs(x.hue - y.hue); return x === y ? 999 : Math.min(d, 360 - d); })))) : 0;
+      if (accents.length >= 2 && hueSpread > 60) {
         colorScore -= 4;
         tags.push('#색수과다');
-        colorLesson += `<br><br>⚠️ <b>유채색 과다 (-4점):</b> 어스톤·블루·포인트 컬러가 3벌 이상 섞여 색이 산만합니다. 유채색은 2벌 이내로 줄이세요.`;
+        colorLesson += `<br><br>⚠️ <b>포인트 컬러 과다 (-4점):</b> 채도가 높은 색(${accents.map(i => i.short || i.name).join(', ')})이 서로 다른 계열로 섞여 시선이 흩어집니다. 포인트 컬러는 한 가지로 줄이고 나머지는 뉴트럴로 받치세요.`;
       }
 
       // 전신 다크 (밝은 브릿지 없음)
@@ -605,19 +644,12 @@
         tags.push('#2026딥뉴트럴');
         colorLesson += `<br><br>🖤 <b>2026 F/W 딥 뉴트럴 (+3점):</b> 런웨이를 지배한 차콜·딥 초콜릿 하의를 밝은 상의로 받쳐, 어두운 톤의 무게감과 가벼운 상체 대비를 동시에 얻었습니다.`;
       }
-      // 색온도 대비: 차가운 뮤트 틸 + 따뜻한 다크 브라운 (클래식 보색 대비. 2026 런웨이 근거는 약해 트렌드 가점이 아님)
-      if (isMutedTeal(mainTop) && isBrownFamily(bottom) && bottom.lightness <= 45) {
-        colorScore += 3;
-        tags.push('#온도대비');
-        colorLesson += `<br><br>🌡️ <b>색온도 대비 [뮤트 틸 + 웜 다크 브라운] (+3점):</b> 차가운 상의와 따뜻한 하의의 온도 차가 고급스럽습니다.`;
-      }
 
       // =========================================================
       // 2. 상의 구성 & 소재 레이어링 역학 (30점)
       // =========================================================
       if (mode === 'layered') {
         layerScore += 3;
-        const innerDiff = shirt.lightness - sweat.lightness;
         const bridge = sweat.lightness <= 36 && shirt.lightness >= 75;
         // 밑단 브릿지: 셔츠가 스웨트 밑단 아래로 1~4cm 나올 때만 성립. 너무 길면 셔츠를 넣어 입고 칼라·커프스가 브릿지를 대신한다
         const gS = hem.shirtBelowSweat;
@@ -629,42 +661,48 @@
               ? `<b>② 셔츠(${cm(shirt.len)})가 스웨트(${cm(sweat.len)})보다 ${cm(gS)} 길어</b> 밑단 브릿지로는 너무 깁니다. 셔츠를 바지에 넣어 허리선을 정리하고, 칼라와 소매 커프스가 브릿지를 대신합니다.`
               : `<b>② 셔츠 밑단은 스웨트에 가려져</b> 칼라와 소매 커프스가 브릿지 역할을 합니다.`));
 
+        const dE = deltaE(sweat, shirt);
         if (bridge && shirt.patterned) {
-          layerScore += 11;
+          layerScore += 10;
           tags.push('#브릿지분리법', '#패턴포인트');
-          layerLesson = `<b>[어두운 스웨트 + 패턴 셔츠 칼라 (+14점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝힙니다. ${hemBridgeText} 패턴의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
+          layerLesson = `<b>[어두운 스웨트 + 패턴 셔츠 칼라 (+13점)]</b> 어두운 ${sweat.name} 위로 <b>${shirt.name}</b>의 칼라가 1.5cm 올라와 얼굴을 밝힙니다. ${hemBridgeText} 패턴의 텍스처까지 더해진, 2026 F/W의 '셔츠 칼라 디테일 강조'에 가장 가까운 구성입니다.`;
         } else if (bridge) {
           layerScore += 8;
           tags.push('#브릿지분리법');
           layerLesson = `<b>[완벽한 도화지 브릿지 (+11점)]</b> 어두운 ${sweat.name} 안쪽에 고명도 ${shirt.name} 셔츠를 받쳤습니다. <b>① 목선 위로 올라오는 칼라</b>가 시선을 얼굴로 끌어올리고, ${hemBridgeText}`;
-        } else if (shirt.patterned && innerDiff >= 20) {
+        } else if (shirt.patterned && dE >= 20) {
           layerScore += 7;
           tags.push('#패턴포인트');
           layerLesson = `<b>[패턴 텍스처 대비 (+10점)]</b> 단색 스웨트 목선 안쪽의 <b>${shirt.name}</b> 패턴이 밋밋한 면티 느낌을 지적인 프레피 무드로 격상시킵니다.`;
         } else if (shirt.lightness <= 25 && sweat.lightness <= 35) {
           layerScore -= 6;
           layerLesson = `<b>[목선 암전 (-3점)]</b> 어두운 스웨트 안에 매우 어두운 ${shirt.name} 셔츠를 넣으면 목 주위가 무겁고 답답합니다. 이런 셔츠는 단독이나 밝은 스웨트 안에서 진가를 발휘합니다.`;
-        } else if (Math.abs(innerDiff) < 12 && sweat.tone === shirt.tone) {
-          layerScore -= 5;
-          layerLesson = `<b>[레이어드 경계 흐림 (-2점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})의 밝기가 너무 비슷해 겹쳐 입은 입체감이 사라집니다. 확실히 밝은 셔츠가 필요합니다.`;
-        } else if (innerDiff >= 20) {
+        } else if (dE < 12 && lightNeutral(sweat) && lightNeutral(shirt)) {
+          layerScore += 1;
+          tags.push('#톤레이어링');
+          layerLesson = `<b>[밝은 톤 레이어링 (+4점)]</b> ${sweat.name}와 ${shirt.name}가 같은 밝은 뉴트럴이라 칼라가 은은하게만 드러납니다. 윈터 화이트처럼 톤의 통일을 노린 룩에서는 이 은은함이 의도입니다. 대신 칼라의 존재감은 약합니다.`;
+        } else if (dE < 12) {
+          layerScore -= 3;
+          layerLesson = `<b>[레이어드 경계 흐림 (±0점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})가 밝기와 색 모두 비슷해(색차 ${dE}) 칼라가 보이지 않습니다. 밝기나 색이 확실히 다른 셔츠가 필요합니다.`;
+        } else if (dE >= 20) {
           layerScore += 4;
-          layerLesson = `<b>[밝은 셔츠로 받친 레이어드 (+7점)]</b> 스웨트의 광택 있는 탄탄한 두께감과 옥스포드 셔츠의 까슬한 조직감이 맞물립니다. 다만 칼라 대비가 약해 '브릿지'만큼의 임팩트는 없습니다.`;
+          tags.push('#프레피칼라');
+          layerLesson = `<b>[칼라가 또렷이 분리되는 레이어드 (+7점)]</b> 스웨트(${sweat.name})와 셔츠(${shirt.name})의 색차가 ${dE}로, 목선에서 칼라가 분명하게 읽힙니다. 그레이 크루넥에 블루 옥스포드를 받치는 아메리칸 프레피의 기본 공식과 같은 원리입니다. 다만 어두운 스웨트에 밝은 셔츠를 받친 '브릿지'만큼의 대비는 아닙니다.`;
         } else {
           layerScore += 1;
-          layerLesson = `<b>[무난한 레이어드 (+4점)]</b> 소재 대비는 있으나 색 대비가 약해 안쪽 셔츠가 존재감을 갖지 못합니다.`;
+          layerLesson = `<b>[은은한 레이어드 (+4점)]</b> 스웨트와 셔츠의 차이(색차 ${dE})가 은은해 칼라가 조용히 받쳐 주는 정도입니다. 차분한 룩으로는 충분하지만 포인트는 약합니다.`;
         }
         // 아우터 ↔ 셔츠 칼라: 목선에서 칼라가 아우터에 묻히는지 확인
         if (!outer.none) {
-          const collarGap = Math.abs(outer.lightness - shirt.lightness);
+          const collarGap = deltaE(outer, shirt);
           if (collarGap >= 40) {
             layerScore += 2;
             tags.push('#칼라대비');
-            layerLesson += `<br><br>🧣 <b>칼라가 아우터와 또렷하게 대비 (+2점):</b> ${outer.short}(명도 ${outer.lightness})과 ${shirt.name} 칼라(명도 ${shirt.lightness})의 차이가 ${collarGap}포인트라 목선이 선명합니다.`;
+            layerLesson += `<br><br>🧣 <b>칼라가 아우터와 또렷하게 대비 (+2점):</b> ${outer.short}(명도 ${outer.lightness})과 ${shirt.name} 칼라(명도 ${shirt.lightness})의 색차가 ${collarGap}라 목선이 선명합니다.`;
           } else if (collarGap <= 10) {
             layerScore -= 3;
             tags.push('#칼라묻힘');
-            layerLesson += `<br><br>🧣 <b>칼라가 아우터에 묻힘 (-3점):</b> ${outer.short}(명도 ${outer.lightness})과 ${shirt.name} 칼라(명도 ${shirt.lightness})가 비슷해 목선의 칼라가 보이지 않습니다.`;
+            layerLesson += `<br><br>🧣 <b>칼라가 아우터에 묻힘 (-3점):</b> ${outer.short}(명도 ${outer.lightness})과 ${shirt.name} 칼라(명도 ${shirt.lightness})의 색차가 ${collarGap}로 비슷해 목선의 칼라가 보이지 않습니다.`;
           }
         }
       } else if (mode === 'sweat_only') {
@@ -675,6 +713,12 @@
         layerScore += SCORE_RULES.single.shirt;
         tags.push('#옥스포드단품');
         layerLesson = `<b>[옥스포드 셔츠 단독 (+${SCORE_RULES.single.shirt}점)]</b> <b>${shirt.name}</b> 핀포인트 옥스포드는 단품으로도 탄탄한 실루엣을 잡아줍니다. 단순한 대신 실패 확률이 낮은 클래식 구성입니다.`;
+      }
+
+      // 상의가 한 장이어도 아우터를 걸치면 2겹 레이어다(블레이저 + 옥스포드 등). 겹친 구성 자체를 인정한다
+      if (mode !== 'layered' && !outer.none) {
+        layerScore += 3;
+        layerLesson += `<br><br>🧥 <b>아우터 + 이너 2겹 구성 (+3점):</b> ${outer.short} 아래 ${mainTop.name}를 받친 레이어드입니다. 블레이저 + 옥스포드처럼 이너 한 장과 아우터만으로도 완결되는 클래식 구성입니다.`;
       }
 
       // =========================================================
@@ -762,10 +806,10 @@
         }
       } else {
         // 아우터 안 입음: 레이어가 있으면 +2, 상의 한 장뿐이면 그 한 장의 비율이 실루엣 전부이므로 +5
-        const pts = mode === 'layered' ? 2 : SCORE_RULES.single.noOuter;
+        const pts = SCORE_RULES.single.noOuter;
         silhouetteScore += pts;
         classicTrendLesson = mode === 'layered'
-          ? `<b>[아우터 없는 레이어드 (+${pts}점)]</b> 상·하의 1:1 비율이 그대로 드러납니다. 구조를 잡아줄 아우터가 없어 룩의 격이 한 단계 낮고, 완성도는 배색과 레이어 디테일에 좌우됩니다.`
+          ? `<b>[아우터 없는 레이어드 (+${pts}점)]</b> 상·하의 1:1 비율이 그대로 드러납니다. 구조적 아우터가 주는 '격'은 없지만, 스웨트 위로 올라온 칼라가 룩을 완결해 줍니다. 완성도는 배색과 레이어 디테일에 좌우됩니다.`
           : `<b>[아우터 없는 단품 완결 (+${pts}점)]</b> 상의 한 장과 ${bottom.name}의 비율이 실루엣의 전부입니다. 군더더기 없는 구성이라 실패 확률이 낮고, 색 대비가 정확하면 충분히 좋은 룩이 됩니다. 구조적 아우터가 주는 '격'만 더해지지 않습니다.`;
       }
 
@@ -860,7 +904,7 @@
         tips[tips.length - 1].text += ` (가슴너비 여유 ${cm(closeGap)}라 잠가도 이너가 눌리지 않습니다.)`;
       }
       // ③ 소매
-      if (mode === 'layered') pushTip('소매', `스웨트 소매를 한 번 밀어 올려 손목을 드러내고, ${cuffRule}`);
+      if (mode === 'layered') pushTip('소매', '스웨트 소매 시보리 밖으로 셔츠 커프스를 1cm 정도만 빼 주세요. 스웨트 소매를 밀어 올리면 커프스가 너무 많이 드러나 단정함이 깨집니다.');
       else if (mode === 'shirt_only') pushTip('소매', style === 'blazer' || style === 'coat'
         ? `${cuffRule} 블레이저 소매가 손목뼈를 많이 넘으면 2~3cm 수선하는 편이 낫습니다.`
         : '소매를 팔꿈치 아래까지 두 번 걷어 올리세요(Roll-up). 베스트·블루종처럼 팔이 드러나는 아우터에서는 걷은 소매가 포인트가 됩니다.');
@@ -868,7 +912,7 @@
       // ④ 넣어 입기 / 빼입기
       pushTip(`${wear.target} ${wear.action}`, wear.reason);
       // ⑤ 하의·마무리
-      if (isDenim(bottom)) pushTip('하의', '데님은 밑단을 한 번 접어 발목을 살짝 드러내면 가벼워 보입니다.');
+      if (isDenim(bottom)) pushTip('하의', '데님은 밑단이 신발 위에 쌓이지 않게 노브레이크로 입으세요. 기장이 길 때만 한 번 접고, 이미 발목에 닿는 기장이면 그대로 두세요.');
       else pushTip('하의', '치노 밑단은 노브레이크로 발목이 살짝 보이게 입으세요. 양말은 하의나 신발 색에 맞추면 다리선이 끊기지 않습니다.');
 
       // 점수 보정
