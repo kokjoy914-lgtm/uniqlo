@@ -1147,6 +1147,7 @@
       // 짧은 남성 헤어 (옆머리는 귀 위로 짧게, 앞머리는 이마에 살짝)
       back.push(`<path d="M -7.9,11 Q -8.6,3.4 -5.4,0.6 Q -1.2,-1.8 3.6,-0.6 Q 8.4,0.8 8.1,8 L 7.9,11 Q 7.4,7.2 6.2,5.6 Q 3.6,6.6 0.4,5.2 Q -2.6,6.4 -5.2,5.8 Q -7,7.2 -7.9,11 Z" fill="#1c1c1e" stroke="#0b0b0c" stroke-width="0.3"/>`);
       back.push(`<path d="M -5,3 Q -1,1.4 3.4,2.6 M -3.4,1.8 Q 0.4,0.6 5,2.4" fill="none" stroke="#3a3a3e" stroke-width="0.35" stroke-linecap="round"/>`);
+      if (shirtOn) back.push(`<path d="M -4.9,25.6 Q -4.7,23.4 -3.9,23.1 Q 0,22.5 3.9,23.1 Q 4.7,23.4 4.9,25.6 L 4.6,28.4 L -4.6,28.4 Z" fill="${fillOf(shirt)}" stroke="${lineOf(shirt.hex)}" stroke-width="0.3"/>`);   // 목 뒤 칼라 밴드
       back.push(`<path d="M -3.8,18.5 L -4.3,29 Q 0,31 4.3,29 L 3.8,18.5 Z" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`);
       [-1, 1].forEach(s => { const A = ARM(s); const cy = A[2][1] + 4.4; back.push(`<ellipse cx="${r1(A[2][0] + s * 0.4)}" cy="${r1(cy)}" rx="2.4" ry="4.1" transform="rotate(${s * -6} ${r1(A[2][0])} ${r1(cy)})" fill="${SKIN}" stroke="${SKIN_EDGE}" stroke-width="0.3"/>`); });
 
@@ -1267,23 +1268,26 @@
         labels.push({ y: hemY, text: `${outer.short}${outer.len ? ' ' + cm(outer.len) : ''}` });
       }
 
-      // ----- 맨 앞: 셔츠 칼라와 커프스 -----
-      const topParts = [];
+      // ----- 셔츠 칼라와 커프스 -----
+      // 칼라는 스웨트 목선 위로 올라오되 아우터(라펠·스탠드 칼라) 안쪽에 들어간다. 커프스는 바깥 소매 아래에서 1~1.5cm 비친다
+      const collarParts = [], cuffParts = [];
       if (shirtOn) {
         const cf = fillOf(shirt);
-        [-1, 1].forEach(s => topParts.push(piece(`M ${s * 0.4},31 L ${s * 6.6},26.6 Q ${s * 8.3},28.4 ${s * 8.6},31.4 L ${s * 4.6},37.4 Z`, shirt, { fill: cf, sw: 0.32, noShade: true }) + `<circle cx="${s * 4.9}" cy="35.6" r="0.4" fill="${lineOf(shirt.hex)}"/>`));
-        // 커프스: 바깥 소매 끝 아래로 1cm 보이게
+        const inJacket = outerOn && style !== 'vest' && style !== 'blouson';
+        const W = inJacket ? 6 : outerOn ? 6.2 : sweatOn ? 6.8 : 7, px = inJacket ? 4.5 : 4.9, py = inJacket ? 35.4 : 35.8;
+        // 목 옆에서 접혀 내려온 칼라 날개: 접힘선(목) → 바깥 끝 → 칼라 포인트 → 첫 단추
+        [-1, 1].forEach(s => collarParts.push(piece(`M ${s * 4.2},24 Q ${s * (W - 0.6)},24.6 ${s * W},27 Q ${s * (W - 0.2)},31.6 ${s * px},${py} L ${s * 0.35},30.6 Q ${s * 2.6},28.4 ${s * 4.2},24 Z`, shirt, { fill: cf, sw: 0.32, noShade: true }) + `<circle cx="${r1(s * (px + 0.2))}" cy="${r1(py - 1.6)}" r="0.4" fill="${lineOf(shirt.hex)}"/>`));
         shirtTop.forEach(({ cuff }) => {
           const sleeveCovered = sweatOn || (outerOn && style !== 'vest');
-          topParts.push(cuffBand(cuff, sleeveCovered ? 2.2 : 4.2, shirt, cf));
+          cuffParts.push(cuffBand(cuff, sleeveCovered ? 2.2 : 4.2, shirt, cf));
         });
         if (!tucked) labels.push({ y: len(shirt, 'shirt') - SHIRT_TAIL, text: shirt.len ? `셔츠 ${cm(shirt.len)} (앞 약 ${cm(shirt.len - SHIRT_TAIL)})` : '셔츠' });
       }
 
-      // 그리는 순서: 손·머리 → (넣어 입은 셔츠) → 바지 → (빼 입은 셔츠) → 스웨트 → 아우터 → 칼라·커프스 → 단추
+      // 그리는 순서: 손·머리 → (넣어 입은 셔츠) → 바지 → (빼 입은 셔츠)·커프스 → 스웨트 → 셔츠 칼라 → 아우터 → 단추
       const order = tucked
-        ? [...back, ...shirtParts, ...pantsParts, ...sweatParts, ...outerParts, ...topParts, ...outerTop]
-        : [...back, ...pantsParts, ...shirtParts, ...sweatParts, ...outerParts, ...topParts, ...outerTop];
+        ? [...back, ...shirtParts, ...cuffParts, ...pantsParts, ...sweatParts, ...collarParts, ...outerParts, ...outerTop]
+        : [...back, ...pantsParts, ...shirtParts, ...cuffParts, ...sweatParts, ...collarParts, ...outerParts, ...outerTop];
 
       // 밑단 표시선과 이름 (겹치는 라벨은 아래로 밀어냄)
       labels.sort((a, b) => a.y - b.y);
