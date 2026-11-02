@@ -206,7 +206,7 @@
       { id: 'shirt_none', category: 'shirt', code: 'NONE', name: '❌ 셔츠 안 입음', desc: '스웨트셔츠 단독 착용' }
     ];
 
-    // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23 (베스트 추가)
+    // 옷 데이터(백업 스냅샷). 평소엔 시트(SHEET_CSV_URL)를 읽고, 시트를 못 읽을 때만 이 값을 씁니다. 마지막 시트 동기화: 2026-10-23 (베스트는 목록에서 제외, 다크 그레이 블루종 추가 예정)
     // 새 옷은 id/category/code/name/hex만 있으면 됩니다. 명도·톤은 hex에서 자동 계산됩니다.
     // 실측은 건조기 후 기준입니다(아우터 제외). 모든 수치는 cm.
     // length(선택): 전체 길이. 아우터·스웨트·셔츠에 적으면 밑단 노출 길이를 계산해 판정합니다.
@@ -218,7 +218,7 @@
       { id: 'outer_31', category: 'outer', code: '31 BEIGE', name: '퍼프텍 쇼트 블루종', desc: '오트밀 베이지 / 경량', hex: '#dfd5c6', style: 'blouson', length: 63.5, chest: 68.5, pattern: 'solid' },
       { id: 'outer_69', category: 'outer', code: '69 NAVY', name: 'JWA 감탄 블레이저', desc: '프레피 금장 / 네이비', hex: '#1c2438', style: 'blazer', length: 73, chest: 55.5, pattern: 'solid' },
       { id: 'outer_blouson09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 쇼트 블루종', desc: '경량 패딩 블루종 / 블랙', hex: '#111827', style: 'blouson', length: 63.5, chest: 68.5, pattern: 'solid' },
-      { id: 'outer_vest09', category: 'outer', code: '09 BLACK', name: 'PUFFTECH 컴팩트 베스트', desc: '경량 패딩 베스트 / 블랙', hex: '#111827', style: 'vest', length: 65, chest: 56, pattern: 'solid' },
+      { id: 'outer_blouson08', category: 'outer', code: '08 DARK GRAY', name: 'PUFFTECH 쇼트 블루종', desc: '경량 패딩 블루종 / 다크 그레이', hex: '#374151', style: 'blouson', length: 63.5, chest: 68.5, pattern: 'solid' },
 
       // 오버사이즈 스웨트셔츠
       { id: 'sweat_03', category: 'sweat', code: '03 GRAY', name: '라이트 그레이', desc: '멜란지 기본 회색', hex: '#d1d5db', length: 69.5, chest: 62, pattern: 'solid' },
@@ -365,6 +365,8 @@
         const label = raw.id || `${idx + 2}번째 행`;
         if (!raw.id) { warnings.push(`❌ ${label}: id가 비어 있어 제외했습니다.`); return; }
         if (/_none$/.test(raw.id)) return; // 안 입음 항목은 앱이 자동 관리
+        // 베스트(조끼)는 쓰지 않는 아이템이라 시트에 남아 있어도 목록에서 뺀다
+        if (raw.category === 'outer' && (raw.style === 'vest' || /베스트|조끼|vest/i.test(raw.name || ''))) return;
         if (seen.has(raw.id)) { warnings.push(`❌ ${label}: id가 중복되어 뒤의 행을 제외했습니다.`); return; }
         if (!CATEGORIES.includes(raw.category)) { warnings.push(`❌ ${label}: category는 ${CATEGORIES.join('/')} 중 하나여야 합니다 (입력: "${raw.category || ''}").`); return; }
         const color = analyzeColor(raw.hex || '');
