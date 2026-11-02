@@ -451,10 +451,11 @@
     // 상·하의 한 쌍의 대비 판정. 보색(블루·네이비 ↔ 카키·브라운)은 명도가 비슷해도 클래식한 분리로 본다
     function pairContrast(top, btm) {
       const d = Math.abs(top.lightness - btm.lightness);
-      if (top.tone === btm.tone && d <= 8) return { kind: 'clash', pts: 0, d };
+      // 같은 계열·같은 밝기라도 색 자체가 눈에 띄게 다르면(틸 스웨트와 중청 데님처럼) '같은 색'이 아니라 톤인톤으로 본다
+      if (top.tone === btm.tone && d <= 8 && deltaE(top, btm) < 10) return { kind: 'clash', pts: 0, d };
       if (d >= 40) return { kind: 'strong', pts: 10, d };
       if (top.tone === btm.tone && d >= 18) return { kind: 'tonal', pts: 8, d };
-      if ((isCool(top) && btm.tone === 'earth') || (top.tone === 'earth' && isCool(btm))) return { kind: 'complement', pts: 7, d };
+      if ((isCool(top) && btm.tone === 'earth') || (top.tone === 'earth' && isCool(btm))) return { kind: 'complement', pts: 8, d };
       if (d >= 25) return { kind: 'mid', pts: 6, d };
       if (top.tone !== btm.tone && d < 15) return { kind: 'flat', pts: 1, d };
       return { kind: 'plain', pts: 3, d };
@@ -594,17 +595,26 @@
       const PAIR_TEXT = {
         strong: p => [`#고명도대비`, `<b>[명도 대비의 정석 (+10점)]</b> ${topName}(명도 ${pairTop.lightness})와 ${bottom.name}(명도 ${bottom.lightness})의 명도 차이가 <b>${p.d}포인트</b>입니다. 상체와 하체가 또렷하게 분리되어 비율이 안정적으로 읽힙니다.`],
         tonal: p => [`#톤온톤정석`, `<b>[톤온톤 배색 (+8점)]</b> ${topName}와 ${bottom.name}가 같은 계열(${pairTop.tone.toUpperCase()}) 안에서 밝기 차이 <b>${p.d}포인트</b>를 둡니다. 색 수는 절제하면서 깊이감을 내는 고급 배색입니다.`],
-        complement: p => [`#보색대비`, `<b>[블루 ↔ 카키·브라운 보색 (+7점)]</b> ${topName}와 ${bottom.name}는 차가운 블루 계열과 따뜻한 어스 계열의 보색 관계입니다. 블루 셔츠에 카키 치노, 네이비에 브라운처럼 명도가 비슷해도 색으로 분리되는 클래식 공식입니다.`],
+        complement: p => [`#보색대비`, `<b>[블루 ↔ 카키·브라운 보색 (+8점)]</b> ${topName}와 ${bottom.name}는 차가운 블루 계열과 따뜻한 어스 계열의 보색 관계입니다. 블루 셔츠에 카키 치노, 네이비에 브라운처럼 명도가 비슷해도 색으로 분리되는 클래식 공식입니다.`],
         mid: p => [`#중간명도대비`, `<b>[명확한 명도 분리 (+6점)]</b> ${topName}와 ${bottom.name}의 명도 차이가 ${p.d}포인트로 충분히 구분됩니다.`],
         flat: p => [`#톤인톤배색`, `<b>[명도가 비슷한 톤인톤 (+1점)]</b> ${topName}와 ${bottom.name}의 밝기가 비슷하고 색으로도 분리되지 않아 가라앉은 인상입니다. 밝은 셔츠 칼라나 대비되는 아우터로 분리를 만들어 주세요.`],
         plain: p => [null, `<b>[무난한 중명도 밸런스 (+3점)]</b> ${topName}와 ${bottom.name}가 충돌 없이 연결되지만, 대비가 약해 인상이 평범합니다.`]
       };
       let colorLesson = '';
-      if (innerPair.kind === 'clash') {
+      if (innerPair.kind === 'clash' && mainTop.category === 'sweat') {
+        tags.push('#모노크롬');
+        colorLesson = `<b>[상하 같은 색 모노크롬 (±0점)]</b> ${mainTop.name}와 ${bottom.name}가 같은 색입니다. 기모 스웨트와 치노 능직처럼 소재가 확실히 달라 '한 벌'이 아니라 의도된 원톤 룩으로 읽히고, 2026 F/W에도 머리부터 발끝까지 한 톤으로 맞춘 룩이 많습니다. 다만 명도 대비가 없어 가점은 없으니, 셔츠 깃이나 신발로 밝은 점을 하나 두면 완성도가 올라갑니다.`;
+        if (outerPair && outerPair.kind !== 'clash') {
+          colorScore += outerPair.pts;
+          const [tag, text] = PAIR_TEXT[outerPair.kind](outerPair);
+          if (tag) tags.push(tag);
+          colorLesson += `<br><br>${outer.short}가 하의와 분리를 만들어 줍니다. ${text.replace(topName, outer.short)}`;
+        }
+      } else if (innerPair.kind === 'clash') {
         const pen = outer.none ? 6 : 4;
         colorScore -= pen;
         tags.push('#톤겹침주의');
-        colorLesson = `<b>[이너와 하의가 같은 색 (-${pen}점)]</b> ${mainTop.name}(명도 ${mainTop.lightness})와 ${bottom.name}(명도 ${bottom.lightness})가 사실상 같은 색이라 경계가 사라져 한 벌처럼 보입니다. 2026 F/W의 톤온톤은 명도나 소재 차이로 층을 만든 룩이라 같은 색을 그대로 맞추는 것과는 다릅니다.`;
+        colorLesson = `<b>[이너와 하의가 같은 색 (-${pen}점)]</b> ${mainTop.name}(명도 ${mainTop.lightness})와 ${bottom.name}(명도 ${bottom.lightness})가 사실상 같은 색이라 경계가 사라져 한 벌처럼 보입니다. 셔츠와 바지는 둘 다 평직·능직이라, 같은 색이면 어긋난 셋업처럼 보이기 쉽습니다.`;
         if (outerPair && outerPair.kind !== 'clash') {
           colorScore += outerPair.pts;
           const [tag, text] = PAIR_TEXT[outerPair.kind](outerPair);
@@ -618,7 +628,7 @@
         colorLesson = text;
         if (useOuter) colorLesson += ` 상체의 주된 색인 아우터 기준으로 판정했습니다(이너 기준이면 ${innerPair.pts >= 0 ? '+' : ''}${innerPair.pts}점).`;
       }
-      if (outerPair && outerPair.kind === 'clash') {
+      if (outerPair && outerPair.kind === 'clash' && ['blazer', 'coat', 'jacket'].includes(outer.style || 'jacket')) {
         colorScore -= 4;
         tags.push('#셋업착시');
         colorLesson += `<br><br>⚠️ <b>아우터와 하의가 같은 색 (-4점):</b> ${outer.short}와 ${bottom.name}가 같은 색이라 셋업처럼 보이지만 소재가 달라 어긋나 보입니다.`;
@@ -658,6 +668,12 @@
         colorLesson += `<br><br>⚠️ <b>밝은 포인트 없는 전신 다크 (-3점):</b> 2026 F/W 런웨이는 블랙·차콜·딥초콜릿 톤온톤이 강세지만, 소재 차이로 깊이를 만든 룩입니다. 면 위주의 단일 질감이면 윤곽이 묻혀 둔해 보이니 밝은 면(셔츠 깃·밑단)을 하나 두는 편이 안전합니다.`;
       }
 
+      // 블루·네이비 상의 × 카키·카멜 하의: 아이비부터 네오프레피까지 이어지는 남성복의 기본 공식
+      if (isCool(mainTop) && bottom.tone === 'earth' && bottom.lightness >= 60) {
+        colorScore += 4;
+        tags.push('#블루카키클래식');
+        colorLesson += `<br><br>🇺🇸 <b>블루 × 카키 아메리칸 클래식 (+4점):</b> ${mainTop.name}와 ${bottom.name}는 옥스포드 블루 셔츠에 카키 치노, 네이비에 카멜로 대표되는 공식입니다. 아이비 스타일부터 2026 네오프레피까지 디자이너들이 가장 오래 써 온 배색입니다.`;
+      }
       // 올리브 하의: 무채색·네이비·밝은 상의와 만나는 검증된 중화 파트너
       if (isOlive(bottom) && (['mono', 'navy'].includes(mainTop.tone) || mainTop.lightness >= 70)) {
         colorScore += 2;
