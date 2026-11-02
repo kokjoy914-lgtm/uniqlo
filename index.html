@@ -39,7 +39,7 @@
       </div>
       <div class="flex gap-1.5 flex-shrink-0">
         <button onclick="recommendBestRandom()" class="whitespace-nowrap px-2.5 py-1.5 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
-          <span>🎲 황금조합 학습</span>
+          <span>🎲 랜덤 코디</span>
         </button>
         <button id="adminBtn" onclick="toggleModal('sheetModal')" class="hidden whitespace-nowrap p-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
           ⚙️ 시트
@@ -75,7 +75,7 @@
     <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. OUTER (아우터)</h2>
-        <span id="selectedOuterLabel" class="text-xs font-bold text-slate-800"></span>
+        <span class="flex items-center min-w-0"><span id="selectedOuterLabel" class="text-xs font-bold text-slate-800"></span><button id="lock_outer" onclick="toggleLock('outer')" class="ml-2 px-1.5 py-0.5 rounded-md border text-[10px] font-bold whitespace-nowrap"></button></span>
       </div>
       <div id="outerContainer" class="grid grid-cols-2 gap-2"></div>
     </section>
@@ -84,7 +84,7 @@
     <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex justify-between items-center mb-1">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">2-A. SWEATSHIRT (스웨트셔츠)</h2>
-        <span id="selectedSweatLabel" class="text-xs font-bold text-indigo-600"></span>
+        <span class="flex items-center min-w-0"><span id="selectedSweatLabel" class="text-xs font-bold text-indigo-600"></span><button id="lock_sweat" onclick="toggleLock('sweat')" class="ml-2 px-1.5 py-0.5 rounded-md border text-[10px] font-bold whitespace-nowrap"></button></span>
       </div>
       <p class="text-[11px] text-slate-400 mb-2.5">셔츠만 단독으로 입으려면 <b>[❌ 안 입음]</b>을 선택하세요.</p>
       <div id="sweatContainer" class="grid grid-cols-2 gap-2"></div>
@@ -94,7 +94,7 @@
     <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex justify-between items-center mb-1">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">2-B. OXFORD SHIRT (옥스포드 셔츠)</h2>
-        <span id="selectedShirtLabel" class="text-xs font-bold text-indigo-600"></span>
+        <span class="flex items-center min-w-0"><span id="selectedShirtLabel" class="text-xs font-bold text-indigo-600"></span><button id="lock_shirt" onclick="toggleLock('shirt')" class="ml-2 px-1.5 py-0.5 rounded-md border text-[10px] font-bold whitespace-nowrap"></button></span>
       </div>
       <p class="text-[11px] text-slate-400 mb-2.5">스웨트만 단독으로 입으려면 <b>[❌ 안 입음]</b>, 겹쳐 입으려면 색상을 고르세요.</p>
       <div id="shirtContainer" class="grid grid-cols-2 gap-2"></div>
@@ -104,7 +104,7 @@
     <section class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">3. BOTTOM (하의 5종)</h2>
-        <span id="selectedBottomLabel" class="text-xs font-bold text-slate-800"></span>
+        <span class="flex items-center min-w-0"><span id="selectedBottomLabel" class="text-xs font-bold text-slate-800"></span><button id="lock_bottom" onclick="toggleLock('bottom')" class="ml-2 px-1.5 py-0.5 rounded-md border text-[10px] font-bold whitespace-nowrap"></button></span>
       </div>
       <div id="bottomContainer" class="grid grid-cols-2 gap-2"></div>
     </section>
@@ -987,6 +987,7 @@
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSmEH4B6exktXDoAkVTcwCBsdX7F49rvBeozcBmznPHnk4OxYB1Bu0xlEP-38pLVykx9Is3GxZyY9EE/pub?output=csv';
     const DEFAULT_BADGE = '클래식 공식 + 2026 F/W 트렌드 룰 엔진';
 
+    const CODE_ONLY_IDS = ['outer_blouson08'];   // 시트에 행을 추가하기 전에도 쓸 수 있게 코드에서 보충하는 옷
     let wardrobe = buildWardrobe(DEFAULT_ITEMS);
     let items = wardrobe.items;
     let state = {
@@ -1387,6 +1388,12 @@
       const curShirt = getItem(state.shirt) || shirts[0];
       const curBottom = getItem(state.bottom) || bottoms[0];
 
+      CATEGORIES.forEach(c => {
+        const b = document.getElementById('lock_' + c);
+        if (!b) return;
+        b.textContent = locks[c] ? '🔒 고정됨' : '🔓 고정';
+        b.className = 'ml-2 px-1.5 py-0.5 rounded-md border text-[10px] font-bold whitespace-nowrap ' + (locks[c] ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-400 border-slate-200');
+      });
       document.getElementById('selectedOuterLabel').textContent = curOuter.short;
       document.getElementById('selectedSweatLabel').textContent = curSweat.none ? '착용 안 함' : `${curSweat.code} (${curSweat.name})`;
       document.getElementById('selectedShirtLabel').textContent = curShirt.none ? '착용 안 함' : `${curShirt.code} (${curShirt.name})`;
@@ -1467,32 +1474,39 @@
     }
 
     // S급 이상 랜덤 추천 (단품/레이어드 골고루 학습)
+    // 고정(🔒)한 카테고리는 그대로 두고, 나머지를 '고점 위주'로 무작위 선택한다.
+    // 가능한 모든 조합을 채점해 점수가 높을수록 훨씬 잘 뽑히게 하되(3점 차 ≈ 2.7배), 매번 같은 결과가 나오지 않도록 가중 추첨한다.
+    const locks = { outer: false, sweat: false, shirt: false, bottom: false };
+    function toggleLock(cat) {
+      locks[cat] = !locks[cat];
+      renderAll();
+    }
     function recommendBestRandom() {
-      const outers = items.filter(i => i.category === 'outer');
-      const sweats = items.filter(i => i.category === 'sweat');
-      const shirts = items.filter(i => i.category === 'shirt');
-      const bottoms = items.filter(i => i.category === 'bottom');
-
-      const highCombos = [];
-      outers.forEach(o => {
-        sweats.forEach(sw => {
-          shirts.forEach(sh => {
-            if (sw.none && sh.none) return;
-            bottoms.forEach(b => {
-              const res = evaluateOutfit(o, sw, sh, b);
-              if (res.total >= SCORE_RULES.grade[1][0]) {
-                highCombos.push({ outer: o.id, sweat: sw.id, shirt: sh.id, bottom: b.id });
-              }
-            });
-          });
-        });
-      });
-
-      if (highCombos.length > 0) {
-        const pick = highCombos[Math.floor(Math.random() * highCombos.length)];
-        state = { ...pick };
-        renderAll();
-      }
+      const by = c => (locks[c] ? [getItem(state[c])] : items.filter(i => i.category === c));
+      const pool = [];
+      by('outer').forEach(o => by('sweat').forEach(sw => by('shirt').forEach(sh => {
+        if (sw.none && sh.none) return;
+        by('bottom').forEach(b => pool.push({ o, sw, sh, b, total: evaluateOutfit(o, sw, sh, b).total }));
+      })));
+      if (!pool.length) { showRandomNote('고정한 조건으로는 만들 수 있는 코디가 없어요. 고정을 하나 풀어 주세요.'); return; }
+      const cur = pool.filter(c => !(c.o.id === state.outer && c.sw.id === state.sweat && c.sh.id === state.shirt && c.b.id === state.bottom));
+      const cand = cur.length ? cur : pool;   // 현재 코디와 같은 조합은 가능하면 피한다
+      const top = Math.max(...cand.map(c => c.total));
+      const w = cand.map(c => Math.exp((c.total - top) / 3));
+      let r = Math.random() * w.reduce((x, y) => x + y, 0), pick = cand[cand.length - 1];
+      for (let i = 0; i < cand.length; i++) { r -= w[i]; if (r <= 0) { pick = cand[i]; break; } }
+      state = { outer: pick.o.id, sweat: pick.sw.id, shirt: pick.sh.id, bottom: pick.b.id };
+      renderAll();
+      const fixed = CATEGORIES.filter(c => locks[c]).length;
+      showRandomNote(fixed ? `🔒 ${fixed}가지는 고정하고 나머지를 골랐어요 (${pick.total}점)` : `🎲 ${pick.total}점 코디가 나왔어요`);
+    }
+    let randomNoteTimer = null;
+    function showRandomNote(msg) {
+      const el = document.getElementById('comboSummaryText');
+      if (!el) return;
+      el.textContent = msg;
+      clearTimeout(randomNoteTimer);
+      randomNoteTimer = setTimeout(renderAll, 3500);
     }
 
     function toggleModal(id) {
@@ -1507,7 +1521,11 @@
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const filledRaw = withDefaultMeasurements(csvToRawItems(await res.text()));
-        const w = buildWardrobe(filledRaw.raw);
+        // 시트에 아직 없는 '코드 전용' 옷(시트에 같은 id가 생기면 시트 값이 우선)
+        const have = new Set(filledRaw.raw.map(r => r.id));
+        const extras = DEFAULT_ITEMS.filter(d => CODE_ONLY_IDS.includes(d.id) && !have.has(d.id));
+        const w = buildWardrobe(filledRaw.raw.concat(extras));
+        if (extras.length) w.warnings.push(`ℹ️ 시트에 없는 ${extras.length}벌(${extras.map(e => e.name).join(', ')})을 코드에서 보충했습니다.`);
         if (filledRaw.filled) w.warnings.push(`ℹ️ 시트에 length/chest 값이 없는 ${filledRaw.filled}벌은 코드의 기본 실측값을 사용합니다. 시트에 값을 적으면 시트가 우선합니다.`);
         const ok = CATEGORIES.every(c => w.items.some(i => i.category === c && !i.none));
         if (!ok) { wardrobe = buildWardrobe(DEFAULT_ITEMS); items = wardrobe.items; wardrobe.warnings = w.warnings.concat('❌ 시트에 4개 카테고리가 모두 있어야 해서 기본 데이터로 작동합니다.'); document.getElementById('dataSourceBadge').textContent = '시트 오류 — 기본 데이터로 작동 중'; return; }
