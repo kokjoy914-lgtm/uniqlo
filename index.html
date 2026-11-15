@@ -601,14 +601,40 @@
         plain: p => [null, `<b>[무난한 중명도 밸런스 (+3점)]</b> ${topName}와 ${bottom.name}가 충돌 없이 연결되지만, 대비가 약해 인상이 평범합니다.`]
       };
       let colorLesson = '';
+      // ---- 의도된 같은 색: 경우의 수 ----
+      // 원칙: 같은 색이면 '정확히' 맞추거나, 아니면 확실히 대비시킨다. 어정쩡하게 비슷한 것이 가장 나쁘다.
+      // 정확히 맞춘 같은 색은 소재가 다르고(기모·능직·나일론) 뉴트럴이면 의도된 룩으로 읽힌다.
+      const sameColor = (x, y) => x.tone === y.tone && Math.abs(x.lightness - y.lightness) <= 8 && deltaE(x, y) < 10;
+      const tonalNeutral = i => ['mono', 'navy', 'earth'].includes(i.tone) && i.chroma < 25;
+      // 셔츠의 칼라·밑단이 원톤을 끊어 주는가 (하의와 명도 40 이상 차이)
+      const shirtBreak = mode === 'layered' && Math.abs(shirt.lightness - bottom.lightness) >= 40;
       if (innerPair.kind === 'clash' && mainTop.category === 'sweat') {
-        tags.push('#모노크롬');
-        colorLesson = `<b>[상하 같은 색 모노크롬 (±0점)]</b> ${mainTop.name}와 ${bottom.name}가 같은 색입니다. 기모 스웨트와 치노 능직처럼 소재가 확실히 달라 '한 벌'이 아니라 의도된 원톤 룩으로 읽히고, 2026 F/W에도 머리부터 발끝까지 한 톤으로 맞춘 룩이 많습니다. 다만 명도 대비가 없어 가점은 없으니, 셔츠 깃이나 신발로 밝은 점을 하나 두면 완성도가 올라갑니다.`;
+        const fullMono = outer.none || sameColor(outer, bottom);
+        if (fullMono && tonalNeutral(bottom)) {
+          // 전신 원톤
+          const pts = 2 + (shirtBreak ? 3 : 0);
+          colorScore += pts;
+          tags.push('#의도된원톤');
+          colorLesson = `<b>[의도된 원톤 (+${pts}점)]</b> ${outer.none ? '' : '아우터(' + outer.short + '), '}스웨트(${mainTop.name}), 하의(${bottom.name})를 같은 색으로 정확히 맞췄습니다. ${outer.none ? '기모 스웨트와 치노 능직' : '나일론·기모·능직'}처럼 소재가 달라 '한 벌'이 아니라 일부러 한 톤으로 맞춘 룩으로 읽히고, 2026 F/W 런웨이에도 머리부터 발끝까지 한 톤으로 맞춘 룩이 많습니다. 명도 대비가 없는 대신 실루엣과 질감이 주인공입니다.`
+            + (shirtBreak ? ` <b>셔츠(${shirt.name})의 칼라와 밑단이 원톤을 한 번씩 끊어 줘(+3)</b> 단조롭지 않습니다.` : ` 밝은 셔츠 깃이나 흰 스니커로 원톤을 한 번 끊어 주면 한 단계 올라갑니다.`);
+        } else if (fullMono) {
+          tags.push('#모노크롬');
+          colorLesson = `<b>[채도 있는 색의 원톤 (±0점)]</b> 스웨트(${mainTop.name})와 하의(${bottom.name})가 같은 색입니다. 뉴트럴이 아닌 색을 위아래로 맞추면 개성은 강하지만 호불호가 큽니다.`;
+        } else {
+          tags.push('#모노크롬');
+          colorLesson = `<b>[이너와 하의가 같은 색 (±0점)]</b> 스웨트(${mainTop.name})와 하의(${bottom.name})가 같은 색입니다. 기모 스웨트와 치노 능직처럼 소재가 달라 한 벌로 보이지는 않습니다.`;
+        }
         if (outerPair && outerPair.kind !== 'clash') {
           colorScore += outerPair.pts;
           const [tag, text] = PAIR_TEXT[outerPair.kind](outerPair);
           if (tag) tags.push(tag);
-          colorLesson += `<br><br>${outer.short}가 하의와 분리를 만들어 줍니다. ${text.replace(topName, outer.short)}`;
+          colorLesson += `<br><br>아우터(${outer.short})가 하의와 분리를 만들어 줍니다. ${text.replace(topName, outer.short)}`;
+          // 컬러 컬럼: 이너와 하의가 한 색으로 이어지고, 앞을 연 아우터가 대비되며 양옆을 감싼다
+          if (Math.abs(outer.lightness - bottom.lightness) >= 25) {
+            colorScore += 4;
+            tags.push('#컬러컬럼');
+            colorLesson += `<br><br>🏛️ <b>컬러 컬럼 (+4점):</b> 스웨트(${mainTop.name})와 하의(${bottom.name})가 같은 색으로 목부터 발목까지 한 줄로 이어지고, 앞을 연 아우터(${outer.short})가 양옆을 대비색으로 감쌉니다. 세로선이 하나로 길게 읽혀 키가 커 보이는, 스타일리스트들이 일부러 쓰는 기법입니다.`;
+          }
         }
       } else if (innerPair.kind === 'clash') {
         const pen = outer.none ? 6 : 4;
@@ -632,6 +658,12 @@
         colorScore -= 4;
         tags.push('#셋업착시');
         colorLesson += `<br><br>⚠️ <b>아우터와 하의가 같은 색 (-4점):</b> ${outer.short}와 ${bottom.name}가 같은 색이라 셋업처럼 보이지만 소재가 달라 어긋나 보입니다.`;
+      }
+
+      if (!outer.none && !['blazer', 'coat', 'jacket'].includes(outer.style || 'jacket') && outer.tone === bottom.tone
+          && Math.abs(outer.lightness - bottom.lightness) <= 12 && Math.abs(mainTop.lightness - bottom.lightness) >= 25) {
+        tags.push('#프레임배색');
+        colorLesson += `<br><br>🖼️ <b>프레임 배색 (±0점):</b> 아우터(${outer.short})와 하의(${bottom.name})가 같은 계열로 바깥 틀을 만들고, 가운데 이너(${mainTop.name})가 포인트가 됩니다. 의도된 배색이라 감점은 없지만, 눈에 보이는 큰 면적(아우터와 하의)이 같은 색이라 상·하의 대비 가점은 그만큼 덜 실감납니다. 그래서 블루 × 카키 같은 추가 배색 가점은 주지 않습니다.`;
       }
 
       // 명도 3단계(밝음/중간/어두움) 구성: 디자이너가 가장 먼저 보는 입체감
@@ -809,9 +841,19 @@
           classicTrendLesson += `<br><br>👖 <b>${label} + 치노 (+2점):</b> 격식의 결이 맞는 클래식 하의 선택입니다.`;
         }
       } else if (style === 'blouson') {
-        if (sameBlock) {
+        const exactTop = sameBlock && outer.tone === mainTop.tone && outerGap <= 8 && deltaE(outer, mainTop) < 10;
+        const collarCut = mode === 'layered' && Math.abs(shirt.lightness - outer.lightness) >= 40;
+        if (exactTop) {
+          // 상체 원톤: 정확히 같은 색으로 맞춘 아우터와 이너는 '덩어리'가 아니라 한 면으로 읽힌다
+          // 하의까지 같은 색인 전신 원톤이면 같은 사실을 두 번 감점하지 않는다
+          const pen = collarCut || sameColor(outer, bottom) ? 0 : 3;
+          colorScore -= pen;
+          tags.push('#상체원톤');
+          classicTrendLesson = `<b>[상체 원톤 (${pen ? '-' + pen : '±0'}점)]</b> 아우터(${outer.short})와 이너(${mainTop.name})를 정확히 같은 색으로 맞췄습니다. 비슷하게 어긋난 색과 달리 일부러 한 톤으로 묶은 상체로 읽히고, 나일론과 기모의 질감 차이가 층을 대신합니다. `
+            + (collarCut ? `셔츠(${shirt.name})의 칼라가 목선에서 원톤을 끊어 줘 레이어가 살아 있습니다.` : sameColor(outer, bottom) ? `하의까지 같은 색인 전신 원톤이라 색 항목의 원톤 판정에서 함께 다뤘습니다.` : `다만 아우터와 이너 사이의 명도 차이가 없어 레이어의 깊이는 줄어듭니다(-3). 밝은 셔츠를 받치면 감점이 사라집니다.`);
+        } else if (sameBlock) {
           colorScore -= 8;
-          classicTrendLesson = `<b>[아우터-상의 같은 색 덩어리 (-8점)]</b> ${outer.short} 안에 비슷한 명도의 ${mainTop.name}을 입으면 색이 상체 전체로 번져 부해 보입니다. 이너는 차콜·다크브라운·네이비처럼 한 단계 어둡게 눌러주세요.`;
+          classicTrendLesson = `<b>[아우터-상의 어정쩡한 같은 색 (-8점)]</b> 아우터(${outer.short}) 안에 비슷하지만 정확히 같지는 않은 이너(${mainTop.name})를 입으면, 의도한 원톤도 대비도 아닌 어긋난 매칭으로 보이고 상체가 부해 보입니다. 정확히 같은 색으로 맞추거나, 이너를 한 단계 이상 밝게·어둡게 확실히 바꾸세요.`;
         } else if (darkMerge) {
           colorScore -= 5;
           classicTrendLesson = `<b>[어두운 아우터 + 어두운 이너 (-5점)]</b> 둘 다 어두워 아우터의 입체감이 사라집니다.`;
