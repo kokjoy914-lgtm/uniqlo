@@ -669,7 +669,9 @@
       }
 
       // 블루·네이비 상의 × 카키·카멜 하의: 아이비부터 네오프레피까지 이어지는 남성복의 기본 공식
-      if (isCool(mainTop) && bottom.tone === 'earth' && bottom.lightness >= 60) {
+      // 아우터가 하의와 같은 어스 계열·비슷한 명도면(베이지 블루종 + 카멜 치노) 상체의 주된 색이 하의와 겹치므로, 이너가 블루여도 이 가점은 주지 않는다
+      const outerBlendsWithBottom = !outer.none && outer.tone === bottom.tone && Math.abs(outer.lightness - bottom.lightness) <= 12;
+      if (isCool(mainTop) && bottom.tone === 'earth' && bottom.lightness >= 60 && !outerBlendsWithBottom) {
         colorScore += 4;
         tags.push('#블루카키클래식');
         colorLesson += `<br><br>🇺🇸 <b>블루 × 카키 아메리칸 클래식 (+4점):</b> ${mainTop.name}와 ${bottom.name}는 옥스포드 블루 셔츠에 카키 치노, 네이비에 카멜로 대표되는 공식입니다. 아이비 스타일부터 2026 네오프레피까지 디자이너들이 가장 오래 써 온 배색입니다.`;
